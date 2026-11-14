@@ -47,6 +47,10 @@ const XN = -DIST_CRUZAMENTOS; // eixo da rua do norte
 const VV = { entrada: -LARG_FAIXA / 2, saiEsq: LARG_FAIXA / 2, saiDir: LARG_FAIXA * 1.5 };
 // Rua do norte: 1 faixa por sentido (mão dupla).
 const NORTE = { descendo: XN - LARG_FAIXA / 2, subindo: XN + LARG_FAIXA / 2 };
+// Rua Minerva: chega pelo norte em frente à VV (cruzamento de 4 braços, visto na imagem 3D).
+const MINERVA = { descendo: -LARG_FAIXA / 2, subindo: LARG_FAIXA / 2 };
+/** x do retorno em gota proposto (Africanos Livre), a leste da VV. */
+const X_GOTA = 150;
 
 const rad = (RUMO_GRAUS * Math.PI) / 180;
 const M_POR_GRAU_LAT = 111320;
@@ -107,6 +111,9 @@ add('Polygon', [ret(-LARG_FAIXA, -BORDA - COMPR_TRANSVERSAL, LARG_FAIXA * 2, -BO
 });
 add('Polygon', [ret(XN - LARG_FAIXA, BORDA, XN + LARG_FAIXA, BORDA + COMPR_TRANSVERSAL)], {
   tipo: 'pista', id: 'pista_norte', nome: 'Rua do cruzamento norte',
+});
+add('Polygon', [ret(-LARG_FAIXA, BORDA, LARG_FAIXA, BORDA + COMPR_TRANSVERSAL)], {
+  tipo: 'pista', id: 'pista_minerva', nome: 'Rua Minerva',
 });
 
 // ---------------------------------------------- CANTEIRO (com as aberturas)
@@ -170,6 +177,13 @@ add('LineString', [[NORTE.subindo, BORDA], [NORTE.subindo, BORDA + COMPR_TRANSVE
   tipo: 'faixa', id: 'norte_saida', via: 'rua_norte', sentido: 'norte', nome: 'Rua do norte, saindo da Africanos', vel_max_kmh: 40,
 });
 
+add('LineString', [[MINERVA.descendo, BORDA + COMPR_TRANSVERSAL], [MINERVA.descendo, BORDA]], {
+  tipo: 'faixa', id: 'minerva_chegada', via: 'rua_minerva', sentido: 'sul', nome: 'Rua Minerva, chegando à Africanos', vel_max_kmh: 40,
+});
+add('LineString', [[MINERVA.subindo, BORDA], [MINERVA.subindo, BORDA + COMPR_TRANSVERSAL]], {
+  tipo: 'faixa', id: 'minerva_saida', via: 'rua_minerva', sentido: 'norte', nome: 'Rua Minerva, saindo da Africanos', vel_max_kmh: 40,
+});
+
 // --------------------------------------------------------------- MOVIMENTOS
 /**
  * Conectores entre faixas. Campos:
@@ -201,6 +215,30 @@ mov('retorno_vv_leste_para_oeste', 'Retorno na abertura da VV (leste → oeste)'
 mov('retorno_vv_oeste_para_leste', 'Retorno na abertura da VV (oeste → leste)',
   curva([D, yOeste(0)], OESTE, [D, yLeste(0)], LESTE),
   { de: 'africanos_oeste_0', para: 'africanos_leste_0', permitido: false, fechado_por: 'fechar_abertura_vv', conflito: 'retorno_proibido' });
+
+// Rua Minerva (norte, em frente à VV)
+mov('minerva_dir_para_oeste', 'Rua Minerva → Africanos oeste (direita)',
+  curva([MINERVA.descendo, BORDA], SUL, [-D, yOeste(2)], OESTE), { de: 'minerva_chegada', para: 'africanos_oeste_2', permitido: true });
+mov('minerva_esq_para_leste', 'Rua Minerva → Africanos leste (esquerda, cruza 3 faixas + abertura)',
+  curva([MINERVA.descendo, BORDA], SUL, [D, yLeste(0)], LESTE),
+  { de: 'minerva_chegada', para: 'africanos_leste_0', permitido: true, fechado_por: 'fechar_abertura_vv', conflito: 'colisao_lateral' });
+mov('minerva_reto_para_vv', 'Rua Minerva → Vicente Venâncio (atravessa a avenida)',
+  [[MINERVA.descendo, BORDA], [VV.entrada, -BORDA]],
+  { de: 'minerva_chegada', para: 'vv_entrada', permitido: true, fechado_por: 'fechar_abertura_vv', conflito: 'colisao_lateral' });
+mov('vv_reto_para_minerva', 'Vicente Venâncio → Rua Minerva (atravessa a avenida)',
+  [[VV.saiEsq, -BORDA], [MINERVA.subindo, BORDA]],
+  { de: 'vv_saida_esq', para: 'minerva_saida', permitido: true, fechado_por: 'fechar_abertura_vv', conflito: 'colisao_lateral' });
+mov('oeste_para_minerva', 'Africanos oeste → Rua Minerva (direita)',
+  curva([D, yOeste(2)], OESTE, [MINERVA.subindo, BORDA], NORTE_V), { de: 'africanos_oeste_2', para: 'minerva_saida', permitido: true });
+mov('leste_para_minerva', 'Africanos leste → Rua Minerva (esquerda pela abertura)',
+  curva([-D, yLeste(0)], LESTE, [MINERVA.subindo, BORDA], NORTE_V),
+  { de: 'africanos_leste_0', para: 'minerva_saida', permitido: false, fechado_por: 'fechar_abertura_vv', conflito: 'conversao_proibida' });
+
+// Retorno em gota proposto (só existe quando a intervenção "retorno_gota" é aplicada)
+add('LineString', curva([X_GOTA - 10, yLeste(0)], LESTE, [X_GOTA - 10, yOeste(0)], OESTE, 20), {
+  tipo: 'opcional', id: 'retorno_gota', nome: 'Retorno em gota (proposto)', intervencao: 'retorno_gota',
+  de: 'africanos_leste_0', para: 'africanos_oeste_0', permitido: true,
+});
 
 // Cruzamento norte (x = -140)
 mov('norte_dir_para_oeste', 'Rua norte → Africanos oeste (direita)',
@@ -239,6 +277,13 @@ const rede = {
     rumo_graus: RUMO_GRAUS,
     calibrado: false,
     observacao: 'Âncora e rumo ainda não conferidos no satélite; ajuste em scripts/gera-rede.mjs.',
+    // Parâmetros do sistema local (metros; x ao longo da Africanos para leste, y para norte),
+    // usados pelo motor de simulação (src/sim) para converter de volta e montar as zonas.
+    geometria: {
+      larg_faixa: LARG_FAIXA, n_faixas: N_FAIXAS, meio_canteiro: MEIO_CANTEIRO, borda: BORDA,
+      x_min: X_MIN, x_max: X_MAX, x_vv: 0, x_norte: XN, x_gota: X_GOTA,
+      abertura_vv: ABERTURA_VV, abertura_norte: ABERTURA_NORTE, compr_transversal: COMPR_TRANSVERSAL,
+    },
   },
   features,
 };

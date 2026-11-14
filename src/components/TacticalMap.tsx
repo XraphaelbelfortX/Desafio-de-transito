@@ -29,6 +29,9 @@ import { INTERSECTION_CENTER } from '../data/mockData';
 import { RedeLayer, REDE_LAYER_IDS, ROTULO_TIPO } from './RedeLayer';
 import { CameraControls3D, VistaPronta } from './CameraControls3D';
 import { Predios3DLayer } from './Predios3DLayer';
+import { SimLayer, SIM_LAYER_IDS } from './SimLayer';
+import { SimPainel } from './SimPainel';
+import { useSimulacao } from '../sim/useSimulacao';
 
 /** Rumo aproximado da Av. dos Africanos (graus, sentido horário a partir do norte). */
 const RUMO_AFRICANOS = 122;
@@ -141,7 +144,18 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const [showRede, setShowRede] = useState(true);
   const [feicaoRede, setFeicaoRede] = useState<FeicaoRede | null>(null);
 
+  // Motor de simulação com IA (src/sim), rodando num Web Worker
+  const sim = useSimulacao();
+  const [showSim, setShowSim] = useState(true);
+
   const handleRedeClick = (evt: MapLayerMouseEvent) => {
+    // Clique num veículo/pedestre da simulação abre o painel com o perfil e o motivo da decisão
+    const agente = evt.features?.find((f) => (SIM_LAYER_IDS as readonly string[]).includes(f.layer?.id ?? ''));
+    if (agente) {
+      sim.selecionar(Number(agente.properties?.id));
+      setFeicaoRede(null);
+      return;
+    }
     const f = evt.features?.[0];
     if (!f) {
       setFeicaoRede(null);
@@ -512,7 +526,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             ? SATELITE_STYLE
             : 'mapbox://styles/mapbox/satellite-streets-v12'
         }
-        interactiveLayerIds={showRede ? [...REDE_LAYER_IDS] : []}
+        interactiveLayerIds={[...(showSim ? SIM_LAYER_IDS : []), ...(showRede ? REDE_LAYER_IDS : [])]}
         cursor={feicaoRede ? 'pointer' : undefined}
         style={{ width: '100%', height: '100%' }}
         attributionControl={true}
@@ -527,6 +541,9 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
         {/* Rede de faixas (gerada por scripts/gera-rede.mjs) */}
         <RedeLayer visible={showRede} />
+
+        {/* Agentes da simulação (carros, motos, ônibus, apps e pedestres) */}
+        <SimLayer quadro={sim.quadro} visible={showSim} selecionado={sim.detalhe?.id ?? null} />
 
         {feicaoRede && (
           <Popup
@@ -855,6 +872,9 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         )}
       </div>
 
+      {/* Painel do simulador com IA */}
+      {showSim && <SimPainel sim={sim} />}
+
       {/* Controles de câmera no estilo Google Earth */}
       <CameraControls3D
         mapRef={mapRef}
@@ -926,6 +946,21 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           >
             <Layers className="w-3.5 h-3.5" />
             <span>Rede de faixas</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowSim((prev) => !prev)}
+            aria-pressed={showSim}
+            title="Mostrar/ocultar o simulador com IA"
+            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg shadow border transition ${
+              showSim
+                ? 'bg-sky-600 text-white border-sky-700 hover:bg-sky-700'
+                : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-white'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Simulador</span>
           </button>
 
           <button

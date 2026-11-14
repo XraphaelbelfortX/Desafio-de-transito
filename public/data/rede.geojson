@@ -8,7 +8,27 @@
   },
   "rumo_graus": -32,
   "calibrado": false,
-  "observacao": "Âncora e rumo ainda não conferidos no satélite; ajuste em scripts/gera-rede.mjs."
+  "observacao": "Âncora e rumo ainda não conferidos no satélite; ajuste em scripts/gera-rede.mjs.",
+  "geometria": {
+   "larg_faixa": 3.3,
+   "n_faixas": 3,
+   "meio_canteiro": 3.5,
+   "borda": 13.399999999999999,
+   "x_min": -320,
+   "x_max": 200,
+   "x_vv": 0,
+   "x_norte": -140,
+   "x_gota": 150,
+   "abertura_vv": [
+    -13,
+    13
+   ],
+   "abertura_norte": [
+    -148,
+    -132
+   ],
+   "compr_transversal": 80
+  }
  },
  "features": [
   {
@@ -146,6 +166,41 @@
       [
        -44.2715189,
        -2.5541958
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "pista",
+    "id": "pista_minerva",
+    "nome": "Rua Minerva"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2704513,
+       -2.5548622
+      ],
+      [
+       -44.270401,
+       -2.5548936
+      ],
+      [
+       -44.2700198,
+       -2.5542842
+      ],
+      [
+       -44.2700701,
+       -2.5542528
+      ],
+      [
+       -44.2704513,
+       -2.5548622
       ]
      ]
     ]
@@ -741,6 +796,54 @@
   {
    "type": "Feature",
    "properties": {
+    "tipo": "faixa",
+    "id": "minerva_chegada",
+    "via": "rua_minerva",
+    "sentido": "sul",
+    "nome": "Rua Minerva, chegando à Africanos",
+    "vel_max_kmh": 40
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2700575,
+      -2.5542606
+     ],
+     [
+      -44.2704387,
+      -2.5548701
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "minerva_saida",
+    "via": "rua_minerva",
+    "sentido": "norte",
+    "nome": "Rua Minerva, saindo da Africanos",
+    "vel_max_kmh": 40
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2704136,
+      -2.5548858
+     ],
+     [
+      -44.2700324,
+      -2.5542763
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
     "tipo": "movimento",
     "id": "vv_dir_para_leste",
     "nome": "VV → Africanos leste (direita)",
@@ -1257,6 +1360,509 @@
      [
       -44.2703773,
       -2.5551049
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "minerva_dir_para_oeste",
+    "nome": "Rua Minerva → Africanos oeste (direita)",
+    "possivel": true,
+    "fechado_por": null,
+    "conflito": null,
+    "de": "minerva_chegada",
+    "para": "africanos_oeste_2",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2704387,
+      -2.5548701
+     ],
+     [
+      -44.2704402,
+      -2.5548709
+     ],
+     [
+      -44.2704429,
+      -2.554871
+     ],
+     [
+      -44.2704467,
+      -2.5548703
+     ],
+     [
+      -44.2704516,
+      -2.5548688
+     ],
+     [
+      -44.2704576,
+      -2.5548666
+     ],
+     [
+      -44.2704645,
+      -2.5548637
+     ],
+     [
+      -44.2704723,
+      -2.5548602
+     ],
+     [
+      -44.2704809,
+      -2.5548561
+     ],
+     [
+      -44.2704903,
+      -2.5548514
+     ],
+     [
+      -44.2705003,
+      -2.5548461
+     ],
+     [
+      -44.270511,
+      -2.5548403
+     ],
+     [
+      -44.2705222,
+      -2.554834
+     ],
+     [
+      -44.2705339,
+      -2.5548273
+     ],
+     [
+      -44.2705461,
+      -2.5548202
+     ],
+     [
+      -44.2705585,
+      -2.5548127
+     ],
+     [
+      -44.2705713,
+      -2.5548048
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "minerva_esq_para_leste",
+    "nome": "Rua Minerva → Africanos leste (esquerda, cruza 3 faixas + abertura)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_vv",
+    "conflito": "colisao_lateral",
+    "de": "minerva_chegada",
+    "para": "africanos_leste_0",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2704387,
+      -2.5548701
+     ],
+     [
+      -44.270447,
+      -2.5548849
+     ],
+     [
+      -44.2704534,
+      -2.5549004
+     ],
+     [
+      -44.2704582,
+      -2.5549162
+     ],
+     [
+      -44.2704612,
+      -2.5549323
+     ],
+     [
+      -44.2704626,
+      -2.5549486
+     ],
+     [
+      -44.2704624,
+      -2.554965
+     ],
+     [
+      -44.2704605,
+      -2.5549812
+     ],
+     [
+      -44.2704571,
+      -2.5549973
+     ],
+     [
+      -44.2704522,
+      -2.5550131
+     ],
+     [
+      -44.2704458,
+      -2.5550285
+     ],
+     [
+      -44.2704378,
+      -2.5550433
+     ],
+     [
+      -44.2704285,
+      -2.5550574
+     ],
+     [
+      -44.2704177,
+      -2.5550708
+     ],
+     [
+      -44.2704056,
+      -2.5550832
+     ],
+     [
+      -44.2703921,
+      -2.5550947
+     ],
+     [
+      -44.2703773,
+      -2.5551049
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "minerva_reto_para_vv",
+    "nome": "Rua Minerva → Vicente Venâncio (atravessa a avenida)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_vv",
+    "conflito": "colisao_lateral",
+    "de": "minerva_chegada",
+    "para": "vv_entrada",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2704387,
+      -2.5548701
+     ],
+     [
+      -44.2705664,
+      -2.5550742
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "vv_reto_para_minerva",
+    "nome": "Vicente Venâncio → Rua Minerva (atravessa a avenida)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_vv",
+    "conflito": "colisao_lateral",
+    "de": "vv_saida_esq",
+    "para": "minerva_saida",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2705413,
+      -2.5550899
+     ],
+     [
+      -44.2704136,
+      -2.5548858
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "oeste_para_minerva",
+    "nome": "Africanos oeste → Rua Minerva (direita)",
+    "possivel": true,
+    "fechado_por": null,
+    "conflito": null,
+    "de": "africanos_oeste_2",
+    "para": "minerva_saida",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2702967,
+      -2.5549762
+     ],
+     [
+      -44.2703094,
+      -2.5549682
+     ],
+     [
+      -44.2703216,
+      -2.5549603
+     ],
+     [
+      -44.2703334,
+      -2.5549525
+     ],
+     [
+      -44.2703445,
+      -2.554945
+     ],
+     [
+      -44.2703551,
+      -2.5549376
+     ],
+     [
+      -44.270365,
+      -2.5549306
+     ],
+     [
+      -44.2703741,
+      -2.5549239
+     ],
+     [
+      -44.2703825,
+      -2.5549175
+     ],
+     [
+      -44.27039,
+      -2.5549116
+     ],
+     [
+      -44.2703966,
+      -2.5549061
+     ],
+     [
+      -44.2704022,
+      -2.5549012
+     ],
+     [
+      -44.2704068,
+      -2.5548968
+     ],
+     [
+      -44.2704103,
+      -2.554893
+     ],
+     [
+      -44.2704126,
+      -2.5548899
+     ],
+     [
+      -44.2704137,
+      -2.5548875
+     ],
+     [
+      -44.2704136,
+      -2.5548858
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "leste_para_minerva",
+    "nome": "Africanos leste → Rua Minerva (esquerda pela abertura)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_vv",
+    "conflito": "conversao_proibida",
+    "de": "africanos_leste_0",
+    "para": "minerva_saida",
+    "permitido": false
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2706518,
+      -2.5549335
+     ],
+     [
+      -44.2706361,
+      -2.5549423
+     ],
+     [
+      -44.2706199,
+      -2.5549495
+     ],
+     [
+      -44.2706034,
+      -2.5549549
+     ],
+     [
+      -44.2705866,
+      -2.5549587
+     ],
+     [
+      -44.2705698,
+      -2.5549609
+     ],
+     [
+      -44.270553,
+      -2.5549615
+     ],
+     [
+      -44.2705364,
+      -2.5549606
+     ],
+     [
+      -44.27052,
+      -2.5549581
+     ],
+     [
+      -44.270504,
+      -2.5549541
+     ],
+     [
+      -44.2704886,
+      -2.5549486
+     ],
+     [
+      -44.2704738,
+      -2.5549417
+     ],
+     [
+      -44.2704597,
+      -2.5549333
+     ],
+     [
+      -44.2704465,
+      -2.5549235
+     ],
+     [
+      -44.2704344,
+      -2.5549123
+     ],
+     [
+      -44.2704233,
+      -2.5548997
+     ],
+     [
+      -44.2704136,
+      -2.5548858
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "opcional",
+    "id": "retorno_gota",
+    "nome": "Retorno em gota (proposto)",
+    "intervencao": "retorno_gota",
+    "de": "africanos_leste_0",
+    "para": "africanos_oeste_0",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2694469,
+      -2.5556857
+     ],
+     [
+      -44.2694416,
+      -2.5556883
+     ],
+     [
+      -44.269436,
+      -2.5556894
+     ],
+     [
+      -44.2694304,
+      -2.5556894
+     ],
+     [
+      -44.2694249,
+      -2.5556881
+     ],
+     [
+      -44.2694194,
+      -2.5556858
+     ],
+     [
+      -44.2694141,
+      -2.5556826
+     ],
+     [
+      -44.269409,
+      -2.5556786
+     ],
+     [
+      -44.2694042,
+      -2.5556739
+     ],
+     [
+      -44.2693998,
+      -2.5556687
+     ],
+     [
+      -44.2693959,
+      -2.555663
+     ],
+     [
+      -44.2693925,
+      -2.555657
+     ],
+     [
+      -44.2693897,
+      -2.5556507
+     ],
+     [
+      -44.2693876,
+      -2.5556444
+     ],
+     [
+      -44.2693862,
+      -2.5556381
+     ],
+     [
+      -44.2693857,
+      -2.5556319
+     ],
+     [
+      -44.269386,
+      -2.555626
+     ],
+     [
+      -44.2693873,
+      -2.5556204
+     ],
+     [
+      -44.2693897,
+      -2.5556154
+     ],
+     [
+      -44.2693932,
+      -2.5556109
+     ],
+     [
+      -44.2693979,
+      -2.5556072
      ]
     ]
    }
