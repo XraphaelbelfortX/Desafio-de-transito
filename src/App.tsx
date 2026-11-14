@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Building2, Activity, AlertTriangle, BellRing, X } from 'lucide-react';
 import { Incident, ToastNotification } from './types';
 import { INITIAL_INCIDENTS, INTERVENTIONS_CATALOG, INTERSECTION_CENTER } from './data/mockData';
@@ -6,6 +6,7 @@ import { TacticalMap } from './components/TacticalMap';
 import { StreetViewModal } from './components/StreetViewModal';
 import { WhatsAppSimulator } from './components/WhatsAppSimulator';
 import { PainelIntervencoes } from './components/sim/PainelIntervencoes';
+import { LogComportamento } from './components/sim/LogComportamento';
 import { useSimulacao } from './sim/useSimulacao';
 
 export function App() {
@@ -22,6 +23,9 @@ export function App() {
 
   // Simulação por agentes: intervenções, tempo, agentes e cenários
   const sim = useSimulacao();
+  const [relatosAtivos, setRelatosAtivos] = useState(true);
+  const relatosAtivosRef = useRef(true);
+  relatosAtivosRef.current = relatosAtivos;
 
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [isStreetViewOpen, setIsStreetViewOpen] = useState<boolean>(false);
@@ -39,9 +43,14 @@ export function App() {
 
   // Relato do cidadão (protótipo): classificação por palavras-chave e ponto no cruzamento
   const handleSendWhatsAppReport = (transcribedText: string) => {
+    if (!relatosAtivosRef.current) return;
     setIsProcessing(true);
 
     setTimeout(() => {
+      if (!relatosAtivosRef.current) {
+        setIsProcessing(false);
+        return;
+      }
       const jitterLat = (Math.random() - 0.5) * 0.00014;
       const jitterLng = (Math.random() - 0.5) * 0.00014;
 
@@ -116,9 +125,9 @@ export function App() {
               <span className="text-slate-300">Cruzamento:</span>
               <strong className="text-white">Av. dos Africanos × Vicente Venâncio de Queiroga</strong>
             </div>
-            <div className="bg-red-500/20 border border-red-400/40 text-red-200 px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5">
-              <AlertTriangle className="w-4 h-4 text-red-400" />
-              <span>{incidents.length} relatos de quase-acidente</span>
+            <div className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 border ${relatosAtivos ? 'bg-red-500/20 border-red-400/40 text-red-200' : 'bg-slate-800 border-slate-600 text-slate-300'}`}>
+              <AlertTriangle className={`w-4 h-4 ${relatosAtivos ? 'text-red-400' : 'text-slate-400'}`} />
+              <span>{relatosAtivos ? `${incidents.length} relatos de quase-acidente` : 'Relatos desligados'}</span>
             </div>
           </div>
         </div>
@@ -156,16 +165,29 @@ export function App() {
       {/* Layout principal: mapa + relatos à esquerda, simulador de intervenções à direita */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         <div className="lg:col-span-8 order-1 h-[min(78vh,760px)] min-h-[480px]">
-          <TacticalMap incidents={incidents} onOpenStreetView={abrirStreetView} latestIncidentId={latestIncidentId} sim={sim} />
-        </div>
+            <TacticalMap incidents={incidents} onOpenStreetView={abrirStreetView} latestIncidentId={latestIncidentId} sim={sim} relatosAtivos={relatosAtivos} />
+          </div>
 
-        <aside className="lg:col-span-4 lg:row-span-2 order-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)]">
-          <PainelIntervencoes sim={sim} />
-        </aside>
+          <aside className="lg:col-span-4 lg:row-span-2 order-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)]">
+            <PainelIntervencoes sim={sim} />
+          </aside>
 
-        <div className="lg:col-span-8 order-3">
-          <WhatsAppSimulator onSendReport={handleSendWhatsAppReport} isProcessing={isProcessing} totalReportsCount={incidents.length} />
-        </div>
+          <div className="lg:col-span-8 order-3">
+            <LogComportamento sim={sim} />
+          </div>
+
+          <div className="lg:col-span-8 order-4">
+            <WhatsAppSimulator
+              onSendReport={handleSendWhatsAppReport}
+              isProcessing={isProcessing}
+              totalReportsCount={incidents.length}
+              ativo={relatosAtivos}
+              onAtivo={(ligado) => {
+                setRelatosAtivos(ligado);
+                if (!ligado) setToasts([]);
+              }}
+            />
+          </div>
       </main>
 
       <StreetViewModal

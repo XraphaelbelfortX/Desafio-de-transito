@@ -23,15 +23,18 @@ interface Props {
   erro: string | null;
   rodando: boolean;
   pontosSim: { conflitos: number; infracoes: number };
+  relatosAtivos: boolean;
 }
 
 /** Seletor da mancha e legenda dos agentes, no canto do mapa. */
-export const SeletorMancha: React.FC<Props> = ({ mancha, onMancha, erro, rodando, pontosSim }) => {
+export const SeletorMancha: React.FC<Props> = ({ mancha, onMancha, erro, rodando, pontosSim, relatosAtivos }) => {
   const ativa = OPCOES.find((o) => o.id === mancha) ?? OPCOES[0];
   const pontos = mancha === 'relatos' ? null : pontosSim[mancha];
   const aviso =
     pontos === null
-      ? 'Relatos que já chegaram. Não mudam com a simulação.'
+      ? relatosAtivos
+        ? 'Relatos que já chegaram. Não mudam com a simulação.'
+        : 'Relatos desligados. O mapa não mostra esses pontos.'
       : pontos === 0
         ? rodando
           ? 'Ainda vazia. A simulação pinta aqui conforme registra.'

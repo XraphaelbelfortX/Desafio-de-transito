@@ -86,6 +86,7 @@ interface TacticalMapProps {
   onOpenStreetView: () => void;
   latestIncidentId: string | null;
   sim: Simulacao;
+  relatosAtivos: boolean;
 }
 
 export const TacticalMap: React.FC<TacticalMapProps> = ({
@@ -93,6 +94,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   onOpenStreetView,
   latestIncidentId,
   sim,
+  relatosAtivos,
 }) => {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [customToken, setCustomToken] = useState<string>(MAPBOX_TOKEN);
@@ -386,7 +388,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
         {/* Camada Nativa Única de Heatmap de Quase-Acidentes centrada nos alertas */}
         <Source id="incidents-source" type="geojson" data={incidentsGeoJson}>
-          <Layer {...heatmapLayer} layout={{ visibility: mancha === 'relatos' ? 'visible' : 'none' }} />
+          <Layer {...heatmapLayer} layout={{ visibility: mancha === 'relatos' && relatosAtivos ? 'visible' : 'none' }} />
         </Source>
 
         {/* Rede de faixas (gerada por scripts/gera-rede.mjs) */}
@@ -433,7 +435,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         <CamadaIntervencoes sim={sim} />
 
         {/* Marcadores dos relatos só aparecem com a mancha Relatos */}
-        {mancha === 'relatos' && incidents.map((incident) => {
+        {mancha === 'relatos' && relatosAtivos && incidents.map((incident) => {
           const isNew = incident.id === latestIncidentId;
           const badgeColor =
             incident.severidade === 'critica'
@@ -478,7 +480,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         })}
 
         {/* Popup de Detalhes do Relato */}
-        {mancha === 'relatos' && selectedIncident && (
+        {mancha === 'relatos' && relatosAtivos && selectedIncident && (
           <Popup
             longitude={selectedIncident.lng}
             latitude={selectedIncident.lat}
@@ -647,7 +649,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
       {/* Mancha, legenda e controles de tempo no canto inferior esquerdo */}
       <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-2 items-start max-w-[min(100%-5.5rem,440px)]">
-        <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} rodando={sim.rodando} pontosSim={pontosSim} />
+        <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} rodando={sim.rodando} pontosSim={pontosSim} relatosAtivos={relatosAtivos} />
         <ControlesTempo
           rodando={sim.rodando}
           onRodando={sim.setRodando}
