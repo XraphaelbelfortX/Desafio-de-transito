@@ -125,7 +125,7 @@ export const ComparacaoCenarios: React.FC<Props> = ({ sim, aberto, onFechar }) =
     let terminou = false;
     if (estava) pausar(false);
 
-    const entradas: { id: IdColuna; nome: string; ints: Intervencao[] }[] = [{ id: 'atual', nome: 'Atual', ints: [] }];
+    const entradas: { id: IdColuna; nome: string; ints: Intervencao[] }[] = [{ id: 'atual', nome: 'Hoje', ints: [] }];
     const ausentes: IdCenario[] = [];
     (['A', 'B'] as IdCenario[]).forEach((id) => {
       const ints = salvos[id];
@@ -206,7 +206,7 @@ export const ComparacaoCenarios: React.FC<Props> = ({ sim, aberto, onFechar }) =
         <header className="flex items-start gap-3 px-5 py-4 border-b border-slate-200">
           <div className="flex-1 min-w-0">
             <h2 id="titulo-comparacao" className="text-lg font-extrabold text-slate-900">
-              Atual × A × B
+              Hoje × A × B
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               Horário {formatarHora(horaConta)}. Três rodadas de 1 h, com as mesmas sementes. A simulação ao vivo pausa enquanto a conta roda.

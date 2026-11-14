@@ -11,7 +11,7 @@ import Map, {
 import maplibregl from 'maplibre-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Eye, AlertTriangle, Layers, Crosshair, KeyRound, Box } from 'lucide-react';
+import { Eye, AlertTriangle, Layers, Crosshair, Box } from 'lucide-react';
 import { Incident } from '../types';
 import { INTERSECTION_CENTER } from '../data/mockData';
 import { RedeLayer, REDE_LAYER_IDS, ROTULO_TIPO } from './RedeLayer';
@@ -97,8 +97,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   relatosAtivos,
 }) => {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
-  const [customToken, setCustomToken] = useState<string>(MAPBOX_TOKEN);
-  const [showTokenInput, setShowTokenInput] = useState(false);
+  const [customToken] = useState<string>(MAPBOX_TOKEN);
   const [showRede, setShowRede] = useState(true);
   const [feicaoRede, setFeicaoRede] = useState<FeicaoRede | null>(null);
 
@@ -527,18 +526,6 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
       {/* HUD Superior Esquerdo: identificação do cruzamento e painel do agente */}
       <div className="absolute top-3 left-3 bottom-[17.5rem] z-10 flex flex-col gap-2 w-[min(100%-1.5rem,340px)] pointer-events-none">
-        <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl border border-slate-700/80 shadow-lg pointer-events-auto">
-          <p className="text-[11px] font-semibold leading-snug">
-            Africanos × Vicente Venâncio
-            <span className="text-slate-400 font-medium"> · {is3DMode ? '3D' : '2D'}</span>
-          </p>
-        </div>
-
-        {sim.modoColocar && (
-          <div className="bg-blue-950/90 text-blue-50 text-xs px-3 py-2 rounded-lg border border-blue-500/50 shadow pointer-events-auto">
-            Clique no lugar. A mancha colorida mostra onde passa a agir. Esc cancela.
-          </div>
-        )}
 
         {sim.agente && (
           <div className="min-h-0 flex-1 overflow-y-auto">
@@ -546,6 +533,16 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           </div>
         )}
       </div>
+
+      {sim.modoColocar && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-xl border border-blue-300/60 flex items-center gap-2 whitespace-nowrap">
+          <Crosshair className="w-4 h-4" />
+          Clique no mapa para colocar a intervenção
+          <button type="button" onClick={() => sim.setModoColocar(null)} className="ml-1 text-[11px] font-bold bg-white/20 hover:bg-white/30 rounded-full px-2 py-0.5">
+            Esc cancela
+          </button>
+        </div>
+      )}
 
       {/* Controles de câmera no estilo Google Earth */}
       <CameraControls3D
@@ -560,91 +557,49 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         vistas={VISTAS}
       />
 
-      {/* Botões Flutuantes Superiores Direitos: Visão 3D + Simular Street View */}
-      <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {/* Botão Alternar Visão 3D / 2D */}
-          <button
-            type="button"
-            onClick={handleToggle3DMode}
-            className={`flex items-center gap-1.5 font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-xl shadow-lg border transition-all duration-200 ${
-              is3DMode
-                ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 border-amber-200'
-                : 'bg-white/95 hover:bg-white text-slate-800 border-slate-300'
-            }`}
-          >
-            <Box className="w-4 h-4" />
-            <span>{is3DMode ? 'Visão 3D Ativa' : 'Ativar Visão 3D'}</span>
-          </button>
-
-          {/* Botão Obrigatório: Simular Street View */}
-          <button
-            type="button"
-            onClick={onOpenStreetView}
-            className="group flex items-center gap-2 bg-gov-navy hover:bg-blue-900 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-lg border border-blue-400/30 transition-all duration-200 hover:scale-[1.02] active:scale-95"
-          >
-            <Eye className="w-4 h-4 text-blue-300 group-hover:text-white transition-colors" />
-            <span>Ver a rua</span>
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={handleRecenter}
-            title="Centralizar na Intersecção (Av. dos Africanos × Vicente Venâncio de Queiroga)"
-            className="flex items-center gap-1.5 bg-white/95 hover:bg-white text-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg shadow border border-slate-200 transition"
-          >
-            <Crosshair className="w-3.5 h-3.5 text-blue-700" />
-            <span>Focar Intersecção</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setShowRede((prev) => !prev);
-              setFeicaoRede(null);
-            }}
-            aria-pressed={showRede}
-            title="Mostrar/ocultar a rede de faixas"
-            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg shadow border transition ${
-              showRede
-                ? 'bg-blue-700 text-white border-blue-800 hover:bg-blue-800'
-                : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-white'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Rede de faixas</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowTokenInput((prev) => !prev)}
-            title="Configurar YOUR_MAPBOX_TOKEN"
-            className="flex items-center gap-1 bg-white/95 hover:bg-white text-slate-600 text-xs font-medium px-2.5 py-1.5 rounded-lg shadow border border-slate-200 transition"
-          >
-            <KeyRound className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden sm:inline">Token</span>
-          </button>
-        </div>
-
-        {showTokenInput && (
-          <div className="bg-white/95 backdrop-blur-md p-3 rounded-xl shadow-xl border border-slate-200 w-72 text-xs">
-            <p className="font-semibold text-slate-800 mb-1">
-              Token Mapbox (`YOUR_MAPBOX_TOKEN`)
-            </p>
-            <p className="text-[11px] text-slate-500 mb-2">
-              Cole seu token `pk.eyJ...` ou mantenha `YOUR_MAPBOX_TOKEN` para usar o mapa vetorial integrado.
-            </p>
-            <input
-              type="text"
-              value={customToken}
-              onChange={(e) => setCustomToken(e.target.value)}
-              placeholder="pk.eyJ1Ijoi..."
-              className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-[11px] text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            />
-          </div>
-        )}
+      {/* Barra do mapa (canto superior direito): vista, rua, centralizar e rede de faixas */}
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-xl p-1 shadow-lg">
+        <button
+          type="button"
+          onClick={handleToggle3DMode}
+          aria-pressed={is3DMode}
+          title={is3DMode ? 'Voltar para a vista de cima (2D)' : 'Ver em 3D'}
+          className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition ${is3DMode ? 'bg-amber-400 text-slate-950' : 'text-slate-200 hover:bg-white/10'}`}
+        >
+          <Box className="w-4 h-4" />
+          {is3DMode ? '3D' : '2D'}
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setShowRede((prev) => !prev);
+            setFeicaoRede(null);
+          }}
+          aria-pressed={showRede}
+          title="Mostrar/ocultar a rede de faixas"
+          className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition ${showRede ? 'bg-blue-600 text-white' : 'text-slate-200 hover:bg-white/10'}`}
+        >
+          <Layers className="w-4 h-4" />
+          Faixas
+        </button>
+        <button
+          type="button"
+          onClick={handleRecenter}
+          title="Centralizar no cruzamento"
+          className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-200 hover:bg-white/10 transition"
+        >
+          <Crosshair className="w-4 h-4" />
+          Centralizar
+        </button>
+        <span className="w-px h-5 bg-white/15 mx-0.5" />
+        <button
+          type="button"
+          onClick={onOpenStreetView}
+          className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg bg-white text-gov-navy hover:bg-blue-50 transition"
+        >
+          <Eye className="w-4 h-4" />
+          Ver a rua
+        </button>
       </div>
 
       {/* Mancha, legenda e controles de tempo no canto inferior esquerdo */}
