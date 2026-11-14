@@ -5,6 +5,7 @@ import { CATALOGO, DEFINICAO, TEMPOS_PADRAO, type TemposSemaforo, type TipoInter
 import { formatarReais, type IdCenario, type Simulacao } from '../../sim/useSimulacao';
 import { orcarCenario, paraLocais, rodarCenario, totalConflitos, totalInfracoes } from '../../sim/cenarios';
 import { IconeIntervencao } from './IconeIntervencao';
+import { CartaoSugestoes, type Assistente } from './Sugestoes';
 import { ComparacaoCenarios } from './ComparacaoCenarios';
 import { ALCANCE, COR_ZONA, GRUPOS, tintaSobre } from './zonasIntervencao';
 
@@ -106,9 +107,10 @@ const Variacao: React.FC<{ agora: number; base: number | undefined; inverter?: b
 
 interface Props {
   sim: Simulacao;
+  assistente?: Assistente;
 }
 
-export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
+export const PainelIntervencoes: React.FC<Props> = ({ sim, assistente }) => {
   const [comparacaoAberta, setComparacaoAberta] = useState(false);
   const custoPorId = new Map((sim.orcamento?.itens ?? []).map((i) => [i.intervencao.id, i.orcamento]));
   const m = sim.metricas;
@@ -167,6 +169,7 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
           <Etapa n={1} titulo="Escolha e coloque no mapa" dica="Clique numa intervenção e depois no mapa, ou arraste direto. A mancha colorida é onde ela age." feita={sim.intervencoes.length > 0}>
             <MousePointerClick className="w-4 h-4 text-slate-400" />
           </Etapa>
+          {assistente && <CartaoSugestoes assistente={assistente} />}
           {GRUPOS.map((g) => (
             <div key={g.categoria}>
               <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">{g.titulo}</h3>

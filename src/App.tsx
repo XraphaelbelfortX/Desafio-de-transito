@@ -8,6 +8,7 @@ import { WhatsAppSimulator } from './components/WhatsAppSimulator';
 import { PainelIntervencoes } from './components/sim/PainelIntervencoes';
 import { LogComportamento } from './components/sim/LogComportamento';
 import { useSimulacao } from './sim/useSimulacao';
+import { useAssistente } from './components/sim/Sugestoes';
 
 export function App() {
   // Relatos de quase-acidentes recebidos (entrada pelo WhatsApp)
@@ -23,6 +24,7 @@ export function App() {
 
   // Simulação por agentes: intervenções, tempo, agentes e cenários
   const sim = useSimulacao();
+  const assistente = useAssistente(sim);
   const [relatosAtivos, setRelatosAtivos] = useState(true);
   const relatosAtivosRef = useRef(true);
   relatosAtivosRef.current = relatosAtivos;
@@ -200,7 +202,7 @@ export function App() {
       {/* Mesa do operador: mapa ocupa a tela, painel fixo à direita */}
       <main className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3 p-3 overflow-y-auto lg:overflow-hidden">
         <div className="flex-1 min-w-0 min-h-[520px] lg:min-h-0">
-          <TacticalMap incidents={incidents} onOpenStreetView={abrirStreetView} latestIncidentId={latestIncidentId} sim={sim} relatosAtivos={relatosAtivos} />
+          <TacticalMap incidents={incidents} onOpenStreetView={abrirStreetView} latestIncidentId={latestIncidentId} sim={sim} relatosAtivos={relatosAtivos} assistente={assistente} />
         </div>
 
         <aside className="w-full lg:w-[420px] xl:w-[440px] shrink-0 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col lg:min-h-0 max-h-[90vh] lg:max-h-none">
@@ -237,7 +239,7 @@ export function App() {
             })}
           </nav>
           <div className="flex-1 min-h-0 flex flex-col">
-            {aba === 'intervencoes' && <PainelIntervencoes sim={sim} />}
+            {aba === 'intervencoes' && <PainelIntervencoes sim={sim} assistente={assistente} />}
             {aba === 'log' && (
               <div className="flex-1 min-h-0 overflow-y-auto painel-embutido">
                 <LogComportamento sim={sim} />

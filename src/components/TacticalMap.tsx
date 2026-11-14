@@ -23,6 +23,7 @@ import { paraGeo } from '../sim/geometria';
 import { CamadaIntervencoes, centroDaZona } from './sim/CamadaIntervencoes';
 import { CAMADAS_AGENTES, CamadaSimulacao } from './sim/CamadaSimulacao';
 import { ControlesTempo } from './sim/ControlesTempo';
+import { MarcadoresSugestao, type Assistente } from './sim/Sugestoes';
 import { PainelAgente } from './sim/PainelAgente';
 import { SeletorMancha, type Mancha } from './sim/SeletorMancha';
 import { MIME_INTERVENCAO } from './sim/PainelIntervencoes';
@@ -87,6 +88,7 @@ interface TacticalMapProps {
   latestIncidentId: string | null;
   sim: Simulacao;
   relatosAtivos: boolean;
+  assistente?: Assistente;
 }
 
 export const TacticalMap: React.FC<TacticalMapProps> = ({
@@ -95,6 +97,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   latestIncidentId,
   sim,
   relatosAtivos,
+  assistente,
 }) => {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [customToken] = useState<string>(MAPBOX_TOKEN);
@@ -395,6 +398,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
         {/* Agentes, semáforos e mancha da simulação (GeoJSON direto na fonte, sem estado React) */}
         <CamadaSimulacao sim={sim} mancha={mancha} onCamadas={aoCamadas} onPontos={aoPontos} />
+        {assistente && !sim.modoColocar && <MarcadoresSugestao assistente={assistente} />}
 
         {feicaoRede && (
           <Popup
