@@ -134,6 +134,11 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim, assistente }) => {
       vivo = false;
     };
   }, [sim.pronto, rede, horaBase]);
+  // Quem perdeu a conversão à esquerda: volta pelo bairro (fora do mapa) ou retorno legal
+  const fluxo = sim.motorRef.current?.fluxoRetorno;
+  const horasFluxo = Math.max(minutos / 60, 1 / 60);
+  const temFechado = sim.intervencoes.some((i) => i.tipo === 'fechar_canteiro' && sim.analises.get(i.id)?.valida);
+  const temRetorno = sim.intervencoes.some((i) => i.tipo === 'retorno' && sim.analises.get(i.id)?.valida && !sim.analises.get(i.id)?.regulariza);
   const comparar = m && base && sim.intervencoes.length > 0 && minutos >= 10;
   const ritmo = !sim.rodando
     ? 'A simulação está pausada.'
@@ -267,6 +272,11 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim, assistente }) => {
                             {ALCANCE[i.tipo]}. {valida ? 'Essa mancha, no mapa, é o trecho que muda.' : DEFINICAO[i.tipo].ondeSoltar}
                           </p>
                         )}
+                        {i.tipo === 'fechar_canteiro' && valida && !temRetorno && (
+                          <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 mt-1">
+                            Sem retorno legal: quem queria virar à esquerda vai dar a volta pelo bairro. Coloque um Retorno (o assistente sugere onde).
+                          </p>
+                        )}
                         {sel && DEFINICAO[i.tipo].observacao && <p className="text-[11px] text-amber-800 mt-1">{DEFINICAO[i.tipo].observacao}</p>}
                         {sel && i.tipo === 'semaforo' && (
                           <EditorTempos tempos={i.tempos ?? TEMPOS_PADRAO} onMudar={(t) => sim.atualizarTempos(i.id, t)} />
@@ -321,6 +331,17 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim, assistente }) => {
                 Quase-acidentes pesados pela gravidade e por quem está exposto (pedestre e moto pesam mais).
                 {comparar && base ? ` Hoje: ${num(base.risco)}.` : ''}
               </p>
+            </div>
+          )}
+          {fluxo && (temFechado || temRetorno) && minutos >= 3 && (
+            <div className={`rounded-xl border px-3 py-2 mb-2 text-[11px] ${temRetorno ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-300 bg-amber-50 text-amber-900'}`}>
+              <p className="font-bold text-xs mb-0.5">Para onde foi quem queria virar à esquerda</p>
+              <p>
+                <strong className="tabular-nums">{num(fluxo.retornoLegal / horasFluxo)}</strong> por hora usam retorno legal no mapa ·{' '}
+                <strong className="tabular-nums">{num(fluxo.desvioExterno / horasFluxo)}</strong> por hora dão a volta pelo bairro
+                {fluxo.desvioExterno > 0 && <> (≈{(fluxo.kmDesvio / fluxo.desvioExterno).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km a mais, fora do mapa)</>}.
+              </p>
+              {!temRetorno && <p className="mt-0.5">Sem retorno legal perto, eles não seguem “de graça”: o desvio entra no atraso médio. Veja a sugestão de Retorno acima.</p>}
             </div>
           )}
           <dl className="grid grid-cols-2 gap-2">

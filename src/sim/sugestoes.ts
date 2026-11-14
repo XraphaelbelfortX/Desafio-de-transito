@@ -23,6 +23,8 @@ export interface Sugestao {
   parteRisco: number;
   /** Frases do porquê, da mais importante para a menos. */
   porque: string[];
+  /** Frase de destaque no título (substitui a parte do risco). */
+  destaque?: string;
   /** Outra opção para o mesmo lugar, se houver. */
   alternativa?: { tipo: TipoIntervencao; motivo: string };
 }
@@ -100,8 +102,16 @@ function principais(l: Lugar, horas: number): string {
  * @param horas horas simuladas nesse período (para dar valores por hora)
  * @param atuais intervenções já no mapa (não sugere o que já está lá)
  */
-export function sugerir(rede: Rede, eventos: Evento[], horas: number, atuais: IntervencaoLocal[]): Sugestao[] {
-  if (eventos.length < 25 || horas <= 0) return [];
+export function sugerir(
+  rede: Rede,
+  eventos: Evento[],
+  horas: number,
+  atuais: IntervencaoLocal[],
+  fluxo?: { desvioExterno: number; retornoLegal: number; kmDesvio: number }
+): Sugestao[] {
+  const jaTemR = atuais.map((i) => ({ tipo: i.tipo, a: analisar(rede, i) }));
+  const sugRetorno = sugerirRetorno(rede, eventos, horas, jaTemR, fluxo);
+  if (eventos.length < 25 || horas <= 0) return sugRetorno ? [sugRetorno] : [];
   const lugares = new Map<string, Lugar>();
   let pesoTotal = 0;
   for (const e of eventos) {
@@ -122,11 +132,12 @@ export function sugerir(rede: Rede, eventos: Evento[], horas: number, atuais: In
   if (pesoTotal <= 0) return [];
 
   const jaTem = atuais.map((i) => ({ tipo: i.tipo, a: analisar(rede, i) }));
-  const sugestoes: Sugestao[] = [];
+  const sugestoes: Sugestao[] = sugRetorno ? [sugRetorno] : [];
   const ordenados = [...lugares.values()].sort((a, b) => b.peso - a.peso);
 
   for (const l of ordenados) {
     if (sugestoes.length >= 3) break;
+    if (l.cruzamento && jaTem.some((j) => j.tipo === 'fechar_canteiro' && j.a.valida && j.a.cruzamento === l.cruzamento)) continue;
     if (l.peso / pesoTotal < 0.08) continue;
     const perto = (t: TipoIntervencao, p: Vec2) =>
       jaTem.some((j) => j.tipo === t && Math.hypot(j.a.p.x - p.x, j.a.p.y - p.y) <= Math.max(DEFINICAO[t].raio, 20));
@@ -171,4 +182,58 @@ export function sugerir(rede: Rede, eventos: Evento[], horas: number, atuais: In
     });
   }
   return sugestoes;
+}
+
+/**
+ * Canteiro fechado sem retorno legal: quem queria virar à esquerda sai do trecho e dá a volta
+ * pelo bairro (desvio estimado, fora do mapa) ou faz retorno proibido na outra abertura.
+ * Sugere um retorno em gota do lado para onde esse fluxo vai.
+ */
+function sugerirRetorno(
+  rede: Rede,
+  eventos: Evento[],
+  horas: number,
+  jaTem: { tipo: TipoIntervencao; a: ReturnType<typeof analisar> }[],
+  fluxo?: { desvioExterno: number; retornoLegal: number; kmDesvio: number }
+): Sugestao | null {
+  const fechado = jaTem.find((j) => j.tipo === 'fechar_canteiro' && j.a.valida);
+  if (!fechado) return null;
+  if (jaTem.some((j) => j.tipo === 'retorno' && j.a.valida && !j.a.regulariza)) return null;
+  const cr = fechado.a.cruzamento ?? 'vv';
+  const c = rede.cruzamentos.find((k) => k.id === cr);
+  if (!c) return null;
+  // Quem perde a esquerda na VV vira à direita (para leste) e precisa voltar: retorno a leste.
+  // Na rua norte é o contrário: retorno a oeste.
+  const sentido = cr === 'vv' ? 1 : -1;
+  for (const d of [90, 120, 70, 150, 180]) {
+    const a = analisar(rede, { id: 'sugestao', tipo: 'retorno', p: { x: c.x + sentido * d, y: 0 } });
+    if (!a.valida || a.regulariza) continue;
+    const [lng, lat] = paraGeo(rede.quadro, a.p);
+    const h = Math.max(horas, 1 / 60);
+    const desvios = fluxo ? fluxo.desvioExterno / h : 0;
+    const kmMedio = fluxo && fluxo.desvioExterno ? fluxo.kmDesvio / fluxo.desvioExterno : 1.4;
+    const retProib = eventos.filter((e) => e.subtipo === 'retorno_proibido').length / h;
+    const nomeCruz = cr === 'vv' ? 'da Vicente Venâncio' : 'norte';
+    const porque = [
+      `Com o canteiro ${nomeCruz} fechado e sem retorno legal, quem queria virar à esquerda não some: ${
+        desvios >= 1 ? `${num(desvios)} veículos por hora` : 'esses veículos'
+      } seguem e dão a volta pelo bairro, cerca de ${kmMedio.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km a mais (uns ${Math.round((kmMedio / 30) * 60)} min). Esse desvio entra no atraso médio, mas acontece fora do mapa.`,
+      retProib >= 1
+        ? `Outros ${num(retProib)} por hora fazem retorno proibido na outra abertura: o problema muda de lugar.`
+        : 'Sem um caminho legal curto, parte dos motoristas tende a fazer retorno proibido na outra abertura.',
+      `Um retorno em gota ${Math.abs(d)} m ${sentido > 0 ? 'a leste' : 'a oeste'} do cruzamento dá um caminho legal e curto. A fila no retorno e o tempo a mais passam a aparecer no mapa e no atraso.`,
+    ];
+    return {
+      chave: `retorno:apos_fechar_${cr}`,
+      tipo: 'retorno',
+      p: a.p,
+      lng,
+      lat,
+      lugar: `canteiro a ${Math.abs(d)} m ${sentido > 0 ? 'a leste' : 'a oeste'} do cruzamento ${nomeCruz}`,
+      parteRisco: 0,
+      destaque: desvios >= 1 ? `${num(desvios)} veículos/h dando a volta pelo bairro` : 'Canteiro fechado sem retorno legal',
+      porque,
+    };
+  }
+  return null;
 }

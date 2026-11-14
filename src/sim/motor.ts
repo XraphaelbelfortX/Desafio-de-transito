@@ -178,6 +178,8 @@ export class Motor {
   horaInicial = 7;
   agentes: Agente[] = [];
   eventos: Evento[] = [];
+  /** Quem perdeu a conversão: desvio pelo bairro (fora do mapa) ou retorno legal, desde o último reinício. */
+  fluxoRetorno = { desvioExterno: 0, retornoLegal: 0, kmDesvio: 0 };
   private rng: Aleatorio;
   private proxId = 1;
   private fila = new Map<string, (() => Agente | null)[]>();
@@ -227,6 +229,7 @@ export class Motor {
 
   reiniciarMetricas() {
     this.tReset = this.t;
+    this.fluxoRetorno = { desvioExterno: 0, retornoLegal: 0, kmDesvio: 0 };
     this.eventos = [];
     this.pares.clear();
     this.acc = {
@@ -467,6 +470,10 @@ export class Motor {
       } else {
         const perfil = this.perfilVeiculo(tipo);
         const escolha = this.escolherRota(d, tipo, perfil);
+        if (escolha.rota.opcao === 'desvio_externo') {
+          this.fluxoRetorno.desvioExterno++;
+          this.fluxoRetorno.kmDesvio += escolha.rota.desvioExterno / 1000;
+        } else if (escolha.rota.opcao === 'legal' && escolha.rota.pecas.some((pc) => pc.elem.ehRetorno)) this.fluxoRetorno.retornoLegal++;
         enfileirar(escolha.rota.pecas[0].elem.id, () => {
           const ag = this.novoAgente(tipo, escolha.rota, d, perfil);
           this.registrar(ag, escolha.decisao);

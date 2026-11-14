@@ -32,7 +32,7 @@ export function useAssistente(sim: Simulacao): Assistente {
       if (!motor) return;
       const horas = motor.metricas().horas;
       setMinutos(horas * 60);
-      setTodas(sugerir(rede, motor.eventos, horas, paraLocais(rede, intervencoes)));
+      setTodas(sugerir(rede, motor.eventos, horas, paraLocais(rede, intervencoes), motor.fluxoRetorno));
     };
     calcular();
     const id = window.setInterval(calcular, 3000);
@@ -84,7 +84,7 @@ export const CartaoSugestoes: React.FC<{ assistente: Assistente }> = ({ assisten
                     <span className="block text-xs font-bold text-slate-900 leading-snug">
                       {def.nome} no {s.lugar}
                     </span>
-                    <span className="block text-[11px] text-violet-900">{Math.round(s.parteRisco * 100)}% do risco medido está aqui</span>
+                    <span className="block text-[11px] text-violet-900">{s.destaque ?? `${Math.round(s.parteRisco * 100)}% do risco medido está aqui`}</span>
                   </span>
                 </button>
                 {aberto && (
