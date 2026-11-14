@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BarChart3, MapPin, Minus, MousePointerClick, Plus, Save, Trash2, TrendingDown, TrendingUp, Upload } from 'lucide-react';
 import type { Metricas } from '../../sim/motor';
 import { CATALOGO, DEFINICAO, TEMPOS_PADRAO, type TemposSemaforo, type TipoIntervencao } from '../../sim/intervencoes';
 import { formatarReais, type IdCenario, type Simulacao } from '../../sim/useSimulacao';
-import { orcarCenario, paraLocais, totalConflitos, totalInfracoes } from '../../sim/cenarios';
+import { orcarCenario, paraLocais, rodarCenario, totalConflitos, totalInfracoes } from '../../sim/cenarios';
 import { IconeIntervencao } from './IconeIntervencao';
 import { ComparacaoCenarios } from './ComparacaoCenarios';
 import { ALCANCE, COR_ZONA, GRUPOS, tintaSobre } from './zonasIntervencao';
@@ -113,15 +113,25 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
   const custoPorId = new Map((sim.orcamento?.itens ?? []).map((i) => [i.intervencao.id, i.orcamento]));
   const m = sim.metricas;
   const minutos = m ? m.horas * 60 : 0;
-  // Guarda o resultado do cruzamento como está hoje (sem intervenções) para mostrar a variação.
-  const baseRef = useRef<Metricas | null>(null);
+  // "Hoje" = o cruzamento sem intervenções, rodado fora da tela do mesmo jeito que a tela Comparar
+  // (aquecimento de 6 min, 3 sementes, 1 h), na hora cheia do relógio. Refaz quando a hora muda.
   const [base, setBase] = useState<Metricas | null>(null);
+  const [calculandoBase, setCalculandoBase] = useState(false);
+  const horaBase = Math.floor(sim.hora);
+  const rede = sim.rede;
   useEffect(() => {
-    if (m && sim.intervencoes.length === 0 && m.horas * 60 >= 10) {
-      baseRef.current = m;
-      setBase(m);
-    }
-  }, [m, sim.intervencoes.length]);
+    if (!sim.pronto || !rede) return;
+    let vivo = true;
+    setBase(null);
+    setCalculandoBase(true);
+    rodarCenario(rede, [], { hora: horaBase })
+      .then((r) => vivo && setBase(r.metricas))
+      .catch(() => undefined)
+      .finally(() => vivo && setCalculandoBase(false));
+    return () => {
+      vivo = false;
+    };
+  }, [sim.pronto, rede, horaBase]);
   const comparar = m && base && sim.intervencoes.length > 0 && minutos >= 10;
   const ritmo = !sim.rodando
     ? 'A simulação está pausada.'
@@ -292,9 +302,9 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
             dica={`${ritmo} Valores por hora, em ${num(minutos)} min simulados${minutos < 15 ? ' (amostra curta, espere um pouco)' : ''}.`}
             feita={minutos >= 15}
           />
-          {!base && sim.intervencoes.length > 0 && (
-            <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 mb-2">
-              Para ver a variação contra o cruzamento de hoje, rode uns 10 min simulados sem intervenções (use 20×) antes de colocar.
+          {calculandoBase && (
+            <p className="text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2">
+              Calculando o cruzamento de hoje às {horaBase}h para comparar…
             </p>
           )}
           {m && (
@@ -395,7 +405,7 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
               <div key={k.rotulo} className="rounded-lg bg-slate-50 border border-slate-200 px-2 py-1.5">
                 <div className="text-[10px] text-slate-500 leading-tight">{k.rotulo}</div>
                 <div className="text-sm font-extrabold tabular-nums text-slate-900 leading-tight">{num(k.agora)}</div>
-                {comparar ? <Variacao agora={k.agora} base={k.b} /> : <span className="text-[10px] text-slate-400">{minutos < 10 ? 'medindo…' : 'cenário de hoje'}</span>}
+                {comparar ? <Variacao agora={k.agora} base={k.b} /> : <span className="text-[10px] text-slate-400">{sim.intervencoes.length === 0 ? (base ? `hoje: ${num(k.b ?? 0)}` : 'calculando…') : 'medindo…'}</span>}
               </div>
             ))}
           </div>

@@ -203,7 +203,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       sim.adicionar(sim.modoColocar, e.lngLat.lng, e.lngLat.lat);
       return;
     }
-    const agente = e.features?.find((f) => f.layer?.id === 'sim-veiculos' || f.layer?.id === 'sim-pedestres');
+    const agente = e.features?.find((f) => f.layer?.id === 'sim-veiculos' || f.layer?.id === 'sim-veiculos-alvo' || f.layer?.id === 'sim-pedestres');
     if (agente?.properties && agente.properties.id != null) {
       sim.selecionar(Number(agente.properties.id));
       sim.selecionarIntervencao(null);
@@ -525,7 +525,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       </Map>
 
       {/* HUD Superior Esquerdo: identificação do cruzamento e painel do agente */}
-      <div className="absolute top-3 left-3 bottom-[17.5rem] z-10 flex flex-col gap-2 w-[min(100%-1.5rem,340px)] pointer-events-none">
+      <div className="absolute top-16 left-3 bottom-[17.5rem] z-10 flex flex-col gap-2 w-[min(100%-1.5rem,340px)] pointer-events-none">
 
         {sim.agente && (
           <div className="min-h-0 flex-1 overflow-y-auto">

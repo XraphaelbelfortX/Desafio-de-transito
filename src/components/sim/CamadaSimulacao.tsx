@@ -7,7 +7,7 @@ import type { Simulacao } from '../../sim/useSimulacao';
 import type { Mancha } from './SeletorMancha';
 
 /** Camadas que o clique do mapa pode acertar. Só entram em interactiveLayerIds com o mapa pronto. */
-export const CAMADAS_AGENTES = ['sim-veiculos', 'sim-pedestres'] as const;
+export const CAMADAS_AGENTES = ['sim-veiculos-alvo', 'sim-veiculos', 'sim-pedestres'] as const;
 
 const VAZIO = { type: 'FeatureCollection' as const, features: [] };
 
@@ -114,7 +114,7 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
     let vivo = true;
     const verificar = () => {
       if (!vivo) return;
-      onCamadas(Boolean(mapa.getLayer('sim-veiculos') && mapa.getLayer('sim-pedestres')));
+      onCamadas(Boolean(mapa.getLayer('sim-veiculos') && mapa.getLayer('sim-veiculos-alvo') && mapa.getLayer('sim-pedestres')));
     };
     verificar();
     mapa.on('idle', verificar);
@@ -149,6 +149,8 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
       const sel = selecionadoRef.current;
       const veiculos: Colecao = { type: 'FeatureCollection', features: [] };
       const pedestres: Colecao = { type: 'FeatureCollection', features: [] };
+      // Alvo de clique invisível no centro de cada veículo (no 3D o prisma é difícil de acertar)
+      const alvos: Colecao = { type: 'FeatureCollection', features: [] };
 
       for (const a of motor.agentes) {
         const cor = corDoAgente(a.tipo, a.infrator, a.id === sel);
@@ -164,6 +166,14 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
           type: 'Feature',
           properties: { id: a.id, cor, altura: BASE + (ALTURA[a.tipo] ?? 1.5) },
           geometry: { type: 'Polygon', coordinates: [retangulo(quadro, a)] },
+        });
+        alvos.features.push({
+          type: 'Feature',
+          properties: { id: a.id },
+          geometry: {
+            type: 'Point',
+            coordinates: paraGeo(quadro, { x: a.x - (Math.cos(a.ang) * a.comp) / 2, y: a.y - (Math.sin(a.ang) * a.comp) / 2 }),
+          },
         });
       }
 
@@ -189,6 +199,7 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
       }
 
       enviar(mapa, 'sim-veiculos', veiculos);
+      enviar(mapa, 'sim-veiculos-alvo', alvos);
       enviar(mapa, 'sim-pedestres', pedestres);
       enviar(mapa, 'sim-luzes', luzes);
       enviar(mapa, 'sim-pulsos', pulsos);
@@ -260,6 +271,13 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
         />
       </Source>
 
+      <Source id="sim-veiculos-alvo" type="geojson" data={VAZIO}>
+        <Layer
+          id="sim-veiculos-alvo"
+          type="circle"
+          paint={{ 'circle-radius': 14, 'circle-opacity': 0.01, 'circle-color': '#000000', 'circle-pitch-alignment': 'viewport' }}
+        />
+      </Source>
       <Source id="sim-pedestres" type="geojson" data={VAZIO}>
         <Layer
           id="sim-pedestres"
