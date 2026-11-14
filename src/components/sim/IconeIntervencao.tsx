@@ -98,14 +98,14 @@ interface Props {
   titulo?: string;
 }
 
-export const IconeIntervencao: React.FC<Props> = ({ tipo, tamanho = 32, invalida, selecionada, titulo }) => {
+export const IconeIntervencao: React.FC<Props> = ({ tipo, tamanho = 32, invalida, selecionada }) => {
   const cat = DEFINICAO[tipo].categoria;
   const c = COR_CATEGORIA[cat];
   const contorno = invalida ? '#dc2626' : selecionada ? '#22d3ee' : c.traco;
   const larguraContorno = invalida || selecionada ? 2 : 1.2;
   const tracejado = invalida ? '2.2 1.6' : undefined;
   return (
-    <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" role="img" aria-label={titulo ?? DEFINICAO[tipo].nome}>
+    <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" aria-hidden="true">
       {cat === 'moderacao' && (
         <rect x="4.2" y="4.2" width="15.6" height="15.6" rx="2" transform="rotate(45 12 12)" fill={c.fundo} stroke={contorno} strokeWidth={larguraContorno} strokeDasharray={tracejado} />
       )}

@@ -68,6 +68,9 @@ export interface Simulacao {
   setModoColocar: (t: TipoIntervencao | null) => void;
   intervencaoSelecionada: string | null;
   selecionarIntervencao: (id: string | null) => void;
+  /** Sobe quando o mapa deve enquadrar a intervenção selecionada. */
+  focoTick: number;
+  focarIntervencao: (id: string) => void;
   selecionadoId: number | null;
   selecionar: (id: number | null) => void;
   agente: AgenteVisao | null;
@@ -126,6 +129,7 @@ export function useSimulacao(): Simulacao {
   const [cenarios, setCenarios] = useState<Record<IdCenario, Intervencao[] | null>>(salvo.cenarios);
   const [modoColocar, setModoColocar] = useState<TipoIntervencao | null>(null);
   const [intervencaoSelecionada, selecionarIntervencao] = useState<string | null>(null);
+  const [focoTick, setFocoTick] = useState(0);
   const [selecionadoId, setSelecionadoId] = useState<number | null>(null);
   const [agente, setAgente] = useState<AgenteVisao | null>(null);
   const rodandoRef = useRef(rodando);
@@ -266,7 +270,13 @@ export function useSimulacao(): Simulacao {
     const id = novoId(tipo);
     setIntervencoes((l) => [...l, { id, tipo, lng, lat, tempos: tipo === 'semaforo' ? { ...TEMPOS_PADRAO } : undefined }]);
     selecionarIntervencao(id);
+    setFocoTick((n) => n + 1);
     setModoColocar(null);
+  }, []);
+
+  const focarIntervencao = useCallback((id: string) => {
+    selecionarIntervencao(id);
+    setFocoTick((n) => n + 1);
   }, []);
 
   const mover = useCallback((id: string, lng: number, lat: number) => {
@@ -327,6 +337,8 @@ export function useSimulacao(): Simulacao {
     setModoColocar,
     intervencaoSelecionada,
     selecionarIntervencao,
+    focoTick,
+    focarIntervencao,
     selecionadoId,
     selecionar,
     agente,

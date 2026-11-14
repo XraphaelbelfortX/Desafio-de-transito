@@ -154,18 +154,18 @@ export function App() {
       </div>
 
       {/* Layout principal: mapa + relatos à esquerda, simulador de intervenções à direita */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        <div className="lg:col-span-8 flex flex-col gap-4">
-          <div className="h-[min(80vh,780px)] min-h-[560px]">
-            <TacticalMap incidents={incidents} onOpenStreetView={abrirStreetView} latestIncidentId={latestIncidentId} sim={sim} />
-          </div>
-
-          <WhatsAppSimulator onSendReport={handleSendWhatsAppReport} isProcessing={isProcessing} totalReportsCount={incidents.length} />
+      <main className="flex-1 max-w-[1600px] w-full mx-auto p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <div className="lg:col-span-8 order-1 h-[min(78vh,760px)] min-h-[480px]">
+          <TacticalMap incidents={incidents} onOpenStreetView={abrirStreetView} latestIncidentId={latestIncidentId} sim={sim} />
         </div>
 
-        <aside className="lg:col-span-4 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)]">
+        <aside className="lg:col-span-4 lg:row-span-2 order-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)]">
           <PainelIntervencoes sim={sim} />
         </aside>
+
+        <div className="lg:col-span-8 order-3">
+          <WhatsAppSimulator onSendReport={handleSendWhatsAppReport} isProcessing={isProcessing} totalReportsCount={incidents.length} />
+        </div>
       </main>
 
       <StreetViewModal

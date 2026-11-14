@@ -11,7 +11,7 @@ import Map, {
 import maplibregl from 'maplibre-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Eye, AlertTriangle, MapPin, Layers, Crosshair, Sparkles, KeyRound, Box } from 'lucide-react';
+import { Eye, AlertTriangle, Layers, Crosshair, KeyRound, Box } from 'lucide-react';
 import { Incident } from '../types';
 import { INTERSECTION_CENTER } from '../data/mockData';
 import { RedeLayer, REDE_LAYER_IDS, ROTULO_TIPO } from './RedeLayer';
@@ -19,7 +19,8 @@ import { CameraControls3D, VistaPronta } from './CameraControls3D';
 import { Predios3DLayer } from './Predios3DLayer';
 import type { Simulacao } from '../sim/useSimulacao';
 import type { TipoIntervencao } from '../sim/intervencoes';
-import { CamadaIntervencoes } from './sim/CamadaIntervencoes';
+import { paraGeo } from '../sim/geometria';
+import { CamadaIntervencoes, centroDaZona } from './sim/CamadaIntervencoes';
 import { CAMADAS_AGENTES, CamadaSimulacao } from './sim/CamadaSimulacao';
 import { ControlesTempo } from './sim/ControlesTempo';
 import { PainelAgente } from './sim/PainelAgente';
@@ -110,14 +111,36 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     setCamadasAgentes((atual) => (atual === prontas ? atual : prontas));
   }, []);
 
-  // Esc cancela o modo de colocar intervenção
-  const { modoColocar, setModoColocar } = sim;
+  // Esc cancela a colocação ou a seleção. O foco do mapa só acontece quando o painel pede.
+  const { modoColocar, setModoColocar, focoTick, intervencaoSelecionada, selecionarIntervencao } = sim;
   useEffect(() => {
-    if (!modoColocar) return;
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setModoColocar(null);
+    if (!modoColocar && !intervencaoSelecionada) return;
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (modoColocar) setModoColocar(null);
+      else selecionarIntervencao(null);
+    };
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
-  }, [modoColocar, setModoColocar]);
+  }, [modoColocar, setModoColocar, intervencaoSelecionada, selecionarIntervencao]);
+
+  useEffect(() => {
+    if (!focoTick || !mapRef.current) return;
+    const id = sim.intervencaoSelecionada;
+    const rede = sim.rede;
+    if (!id || !rede) return;
+    const a = sim.analises.get(id);
+    const i = sim.intervencoes.find((x) => x.id === id);
+    if (!i) return;
+    const [lng, lat] = a ? paraGeo(rede.quadro, centroDaZona(rede, i.tipo, a)) : [i.lng, i.lat];
+    mapRef.current.easeTo({
+      center: [lng, lat],
+      zoom: Math.max(mapRef.current.getZoom(), 17.9),
+      duration: 650,
+    });
+    // Só o pedido de foco dispara o enquadramento; clicar o ícone no mapa não recentraliza.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focoTick]);
 
   const [viewState, setViewState] = useState({
     latitude: INTERSECTION_CENTER.lat,
@@ -182,6 +205,24 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       setFeicaoRede(null);
       setSelectedIncident(null);
       return;
+    }
+    try {
+      const mapa = mapRef.current?.getMap();
+      const camadasZona = ['sim-int-areas-fill', 'sim-int-solidos-3d'].filter((id) => mapa?.getLayer(id));
+      if (mapa && camadasZona.length > 0) {
+        const zona = mapa.queryRenderedFeatures(e.point, { layers: camadasZona });
+        const bruto = zona[0]?.properties?.zid ?? zona[0]?.properties?.id;
+        const idZona = bruto;
+        if (idZona != null && String(idZona) !== '') {
+          sim.selecionar(null);
+          sim.selecionarIntervencao(String(idZona));
+          setFeicaoRede(null);
+          setSelectedIncident(null);
+          return;
+        }
+      }
+    } catch {
+      /* a camada da zona ainda não entrou no estilo */
     }
     sim.selecionar(null);
     sim.selecionarIntervencao(null);
@@ -480,29 +521,16 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
       {/* HUD Superior Esquerdo: identificação do cruzamento e painel do agente */}
       <div className="absolute top-3 left-3 bottom-[17.5rem] z-10 flex flex-col gap-2 w-[min(100%-1.5rem,340px)] pointer-events-none">
-        <div className="bg-slate-900/90 backdrop-blur-md text-white px-3.5 py-2.5 rounded-xl border border-slate-700/80 shadow-lg pointer-events-auto">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2.5 w-2.5 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-300">
-              {is3DMode ? 'Visão 3D' : 'Visão 2D'} • São Luís/MA
-            </span>
-          </div>
-          <h2 className="text-xs sm:text-sm font-bold text-white mt-0.5 flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-red-400 shrink-0" />
-            Av. dos Africanos × Av. Vicente Venâncio de Queiroga
-          </h2>
-          <p className="text-[11px] text-slate-300 mt-0.5 font-mono">
-            Lat: {INTERSECTION_CENTER.lat}, Lng: {INTERSECTION_CENTER.lng} •{' '}
-            <strong className="text-amber-300">{incidents.length} relatos no cruzamento</strong>
+        <div className="bg-slate-900/90 backdrop-blur-md text-white px-3 py-1.5 rounded-xl border border-slate-700/80 shadow-lg pointer-events-auto">
+          <p className="text-[11px] font-semibold leading-snug">
+            Africanos × Vicente Venâncio
+            <span className="text-slate-400 font-medium"> · {is3DMode ? '3D' : '2D'}</span>
           </p>
         </div>
 
         {sim.modoColocar && (
           <div className="bg-blue-950/90 text-blue-50 text-xs px-3 py-2 rounded-lg border border-blue-500/50 shadow pointer-events-auto">
-            Clique no lugar da intervenção. Esc cancela.
+            Clique no lugar. A mancha colorida mostra onde passa a agir. Esc cancela.
           </div>
         )}
 
@@ -550,10 +578,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             className="group flex items-center gap-2 bg-gov-navy hover:bg-blue-900 text-white font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-lg border border-blue-400/30 transition-all duration-200 hover:scale-[1.02] active:scale-95"
           >
             <Eye className="w-4 h-4 text-blue-300 group-hover:text-white transition-colors" />
-            <span>Simular Street View</span>
-            <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold uppercase bg-blue-500/30 text-blue-200 rounded border border-blue-400/30 flex items-center gap-1">
-              <Sparkles className="w-2.5 h-2.5" /> Rua 3D
-            </span>
+            <span>Ver a rua</span>
           </button>
         </div>
 

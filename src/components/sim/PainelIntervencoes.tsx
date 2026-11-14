@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Minus, Plus, Save, Trash2, Upload } from 'lucide-react';
+import { MapPin, Minus, Plus, Save, Trash2, Upload } from 'lucide-react';
 import { CATALOGO, DEFINICAO, TEMPOS_PADRAO, type TemposSemaforo, type TipoIntervencao } from '../../sim/intervencoes';
 import { formatarReais, type IdCenario, type Simulacao } from '../../sim/useSimulacao';
 import { orcarCenario, paraLocais, totalConflitos, totalInfracoes } from '../../sim/cenarios';
 import { IconeIntervencao } from './IconeIntervencao';
 import { ComparacaoCenarios } from './ComparacaoCenarios';
+import { ALCANCE, COR_ZONA, GRUPOS, tintaSobre } from './zonasIntervencao';
 
 export const COR_CENARIO: Record<'atual' | IdCenario, string> = {
   atual: '#2a78d6',
@@ -99,40 +100,45 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
   return (
     <div className="flex flex-col h-full min-h-0">
       <div className="bg-gov-navy text-white px-5 py-4 border-b border-slate-800">
-        <h2 className="text-lg font-extrabold tracking-tight">Simulador de intervenções</h2>
+        <h2 className="text-lg font-extrabold tracking-tight">Onde cada intervenção age</h2>
         <p className="text-xs text-slate-300 mt-0.5">
-          Arraste uma intervenção para o mapa, ou clique nela e depois clique no lugar. No mapa, arraste o ícone para reposicionar.
+          A mancha colorida no mapa é a área que muda o trânsito. O ícone só marca a alça: arraste para mudar de lugar.
         </p>
       </div>
 
       <div className="p-4 sm:p-5 space-y-5 flex-1 min-h-0 overflow-y-auto">
         {/* Paleta */}
-        <section aria-label="Intervenções disponíveis">
-          <div className="grid grid-cols-3 gap-2">
-            {CATALOGO.map((d) => {
-              const ativo = sim.modoColocar === d.tipo;
-              return (
-                <button
-                  key={d.tipo}
-                  type="button"
-                  draggable
-                  onDragStart={(e) => iniciarArraste(e, d.tipo)}
-                  onClick={() => sim.setModoColocar(ativo ? null : d.tipo)}
-                  aria-pressed={ativo}
-                  title={`${d.resumo} ${d.ondeSoltar}`}
-                  className={`group flex flex-col items-center gap-1.5 rounded-xl border px-1.5 pt-2.5 pb-2 text-center transition-colors cursor-grab active:cursor-grabbing focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700 ${
-                    ativo ? 'border-blue-700 bg-blue-50 ring-1 ring-blue-700/30' : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
-                  }`}
-                >
-                  <IconeIntervencao tipo={d.tipo} tamanho={34} />
-                  <span className="text-[11px] font-semibold text-slate-800 leading-tight">{d.nome}</span>
-                </button>
-              );
-            })}
-          </div>
+        <section aria-label="Intervenções disponíveis" className="space-y-3">
+          {GRUPOS.map((g) => (
+            <div key={g.categoria}>
+              <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1.5">{g.titulo}</h3>
+              <div className="grid grid-cols-2 gap-1.5">
+                {CATALOGO.filter((d) => d.categoria === g.categoria).map((d) => {
+                  const ativo = sim.modoColocar === d.tipo;
+                  return (
+                    <button
+                      key={d.tipo}
+                      type="button"
+                      draggable
+                      onDragStart={(e) => iniciarArraste(e, d.tipo)}
+                      onClick={() => sim.setModoColocar(ativo ? null : d.tipo)}
+                      aria-pressed={ativo}
+                      title={`${d.resumo} ${ALCANCE[d.tipo]}. ${d.ondeSoltar}`}
+                      className={`flex items-center gap-1.5 rounded-xl border px-1.5 py-1.5 text-left transition-colors cursor-grab active:cursor-grabbing focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700 ${
+                        ativo ? 'border-blue-700 bg-blue-50 ring-1 ring-blue-700/30' : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <IconeIntervencao tipo={d.tipo} tamanho={28} />
+                      <span className="text-[11px] font-semibold text-slate-900 leading-tight">{d.nome}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
           {sim.modoColocar && (
-            <p className="text-[11px] text-blue-900 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5 mt-2" role="status">
-              Clique no mapa para colocar: {DEFINICAO[sim.modoColocar].nome.toLowerCase()}. {DEFINICAO[sim.modoColocar].ondeSoltar}
+            <p className="text-[11px] text-blue-900 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5" role="status">
+              Clique no mapa para colocar {DEFINICAO[sim.modoColocar].nome.toLowerCase()}. {DEFINICAO[sim.modoColocar].ondeSoltar} A mancha mostra onde passa a agir.
             </p>
           )}
         </section>
@@ -140,7 +146,7 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
         {/* Intervenções colocadas */}
         <section aria-label="Intervenções no mapa">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-bold text-slate-900">No mapa ({sim.intervencoes.length})</h3>
+            <h3 className="text-sm font-bold text-slate-900">No cruzamento ({sim.intervencoes.length})</h3>
             {sim.intervencoes.length > 0 && (
               <button type="button" onClick={sim.limpar} className="text-[11px] font-semibold text-slate-500 hover:text-red-700">
                 Tirar todas
@@ -149,25 +155,43 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
           </div>
           {sim.intervencoes.length === 0 ? (
             <p className="text-xs text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-xl px-3 py-3">
-              Nada colocado: este é o cenário atual do cruzamento. Coloque uma intervenção para ver o efeito nos agentes.
+              Nada colocado: este é o cruzamento como está hoje. Escolha uma intervenção e clique no mapa. A mancha colorida marca onde ela age.
             </p>
           ) : (
             <ul className="space-y-2">
-              {sim.intervencoes.map((i) => {
+              {sim.intervencoes.map((i, indice) => {
                 const a = sim.analises.get(i.id);
                 const o = custoPorId.get(i.id);
                 const sel = sim.intervencaoSelecionada === i.id;
+                const valida = a?.valida === true;
+                const cor = valida ? COR_ZONA[i.tipo] : '#ef4444';
+                const escolher = () => (sel ? sim.selecionarIntervencao(null) : sim.focarIntervencao(i.id));
                 return (
-                  <li key={i.id} className={`rounded-xl border px-2.5 py-2 ${sel ? 'border-cyan-500 bg-cyan-50/40' : 'border-slate-200 bg-slate-50/70'}`}>
-                    <div className="flex items-start gap-2.5">
-                      <button type="button" onClick={() => sim.selecionarIntervencao(sel ? null : i.id)} className="shrink-0 mt-0.5" aria-label={`Selecionar ${DEFINICAO[i.tipo].nome}`}>
-                        <IconeIntervencao tipo={i.tipo} tamanho={28} invalida={a ? !a.valida : false} />
+                  <li
+                    key={i.id}
+                    className={`rounded-xl border-y border-r border-l-4 px-2.5 py-2 ${sel ? 'border-y-cyan-500 border-r-cyan-500 bg-cyan-50/50' : 'border-y-slate-200 border-r-slate-200 bg-white'}`}
+                    style={{ borderLeftColor: cor }}
+                  >
+                    <div className="flex items-start gap-2">
+                      <button
+                        type="button"
+                        onClick={escolher}
+                        className="shrink-0 mt-0.5 w-6 h-6 rounded-full text-[11px] font-extrabold flex items-center justify-center"
+                        style={{ background: cor, color: valida ? tintaSobre(i.tipo) : '#ffffff', boxShadow: 'inset 0 0 0 1px rgba(15,23,42,0.25)' }}
+                        aria-label={`Mostrar ${DEFINICAO[i.tipo].nome} no mapa`}
+                      >
+                        {indice + 1}
                       </button>
                       <div className="min-w-0 flex-1">
-                        <button type="button" onClick={() => sim.selecionarIntervencao(sel ? null : i.id)} className="text-left w-full">
-                          <span className="text-xs font-bold text-slate-900 block">{DEFINICAO[i.tipo].nome}</span>
-                          <span className={`text-[11px] leading-snug block ${a?.valida ? 'text-slate-600' : 'text-red-700 font-medium'}`}>
-                            {a?.valida ? a.efeito : `Sem efeito. ${a?.efeito ?? ''}`}
+                        <button type="button" onClick={escolher} className="text-left w-full">
+                          <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                            {DEFINICAO[i.tipo].nome}
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${valida ? 'bg-emerald-100 text-emerald-900' : 'bg-red-100 text-red-800'}`}>
+                              {valida ? 'Agindo' : 'Sem efeito'}
+                            </span>
+                          </span>
+                          <span className={`text-[11px] leading-snug block mt-0.5 ${valida ? 'text-slate-600' : 'text-red-700 font-medium'}`}>
+                            {a ? a.efeito : 'Calculando o lugar…'}
                           </span>
                         </button>
                         {o && (
@@ -177,11 +201,25 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
                             {o.totalMensal > 0 && <>{formatarReais(o.totalMensal)} por mês</>}
                           </span>
                         )}
+                        {sel && (
+                          <p className="text-[11px] text-slate-700 mt-1.5 bg-white rounded-lg px-2 py-1.5 border border-slate-200">
+                            {ALCANCE[i.tipo]}. {valida ? 'Essa mancha, no mapa, é o trecho que muda.' : DEFINICAO[i.tipo].ondeSoltar}
+                          </p>
+                        )}
                         {sel && DEFINICAO[i.tipo].observacao && <p className="text-[11px] text-amber-800 mt-1">{DEFINICAO[i.tipo].observacao}</p>}
                         {sel && i.tipo === 'semaforo' && (
                           <EditorTempos tempos={i.tempos ?? TEMPOS_PADRAO} onMudar={(t) => sim.atualizarTempos(i.id, t)} />
                         )}
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => sim.focarIntervencao(i.id)}
+                        aria-label={`Centralizar ${DEFINICAO[i.tipo].nome} no mapa`}
+                        title="Ver no mapa"
+                        className="p-1 rounded text-slate-500 hover:text-blue-800 hover:bg-blue-50 shrink-0"
+                      >
+                        <MapPin className="w-4 h-4" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => sim.remover(i.id)}
@@ -200,10 +238,10 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
 
         {/* Resultado ao vivo */}
         <section aria-label="Resultado na simulação">
-          <h3 className="text-sm font-bold text-slate-900">Agora na simulação</h3>
+          <h3 className="text-sm font-bold text-slate-900">Efeito do que está no mapa</h3>
           <p className="text-[11px] text-slate-500 mb-2">
-            {ritmo} Valores por hora, medidos em {num(minutos)} min simulados desde a última mudança
-            {minutos < 15 ? ' (amostra curta, espere um pouco)' : ''}.
+            {ritmo} Valores por hora, desde a última mudança de lugar ou de hora
+            {minutos < 15 ? ' (amostra curta, espere um pouco)' : ''}, em {num(minutos)} min simulados.
           </p>
           <dl className="grid grid-cols-2 gap-2">
             {[

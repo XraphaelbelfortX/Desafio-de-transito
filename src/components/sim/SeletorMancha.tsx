@@ -49,23 +49,26 @@ export const SeletorMancha: React.FC<Props> = ({ mancha, onMancha, erro }) => {
         <div className={`w-24 h-2 rounded-full bg-gradient-to-r ${ativa.rampa}`} />
         <span className="text-[10px] font-semibold text-slate-700">Muitos</span>
       </div>
-      <ul className="flex flex-wrap gap-x-2.5 gap-y-1 mt-1.5">
-        {AGENTES.map((a) => (
-          <li key={a.nome} className="flex items-center gap-1">
-            <span
-              className={`w-2.5 h-2.5 rounded-sm ${a.borda ? 'border border-slate-400' : ''}`}
-              style={{ background: a.cor }}
-            />
-            {a.nome}
+      <details className="mt-1.5">
+        <summary className="cursor-pointer text-[10px] font-semibold text-slate-500">Legenda dos agentes</summary>
+        <ul className="flex flex-wrap gap-x-2.5 gap-y-1 mt-1">
+          {AGENTES.map((a) => (
+            <li key={a.nome} className="flex items-center gap-1">
+              <span
+                className={`w-2.5 h-2.5 rounded-sm ${a.borda ? 'border border-slate-400' : ''}`}
+                style={{ background: a.cor }}
+              />
+              {a.nome}
+            </li>
+          ))}
+          <li className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="w-2 h-2 rounded-full bg-yellow-400" />
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            Semáforo
           </li>
-        ))}
-        <li className="flex items-center gap-1">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span className="w-2 h-2 rounded-full bg-yellow-400" />
-          <span className="w-2 h-2 rounded-full bg-red-500" />
-          Semáforo
-        </li>
-      </ul>
+        </ul>
+      </details>
       {erro && <p className="text-red-700 mt-1">Simulador indisponível: {erro}</p>}
     </div>
   );
