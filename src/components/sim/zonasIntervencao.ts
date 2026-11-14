@@ -52,8 +52,8 @@ export const ALCANCE: Record<TipoIntervencao, string> = {
 };
 
 export const GRUPOS: { categoria: Categoria; titulo: string }[] = [
-  { categoria: 'fiscalizacao', titulo: 'Age num raio' },
-  { categoria: 'controle', titulo: 'Age no cruzamento' },
-  { categoria: 'geometria', titulo: 'Age na abertura ou na faixa' },
-  { categoria: 'moderacao', titulo: 'Age na pista' },
+  { categoria: 'fiscalizacao', titulo: 'Fiscalização · age num raio' },
+  { categoria: 'controle', titulo: 'Controle · age no cruzamento' },
+  { categoria: 'geometria', titulo: 'Mudar a via · age na abertura ou na faixa' },
+  { categoria: 'moderacao', titulo: 'Reduzir velocidade · age na pista' },
 ];

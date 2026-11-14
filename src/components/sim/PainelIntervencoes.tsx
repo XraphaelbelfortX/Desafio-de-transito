@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { MapPin, Minus, Plus, Save, Trash2, Upload } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { BarChart3, MapPin, Minus, MousePointerClick, Plus, Save, Trash2, TrendingDown, TrendingUp, Upload } from 'lucide-react';
+import type { Metricas } from '../../sim/motor';
 import { CATALOGO, DEFINICAO, TEMPOS_PADRAO, type TemposSemaforo, type TipoIntervencao } from '../../sim/intervencoes';
 import { formatarReais, type IdCenario, type Simulacao } from '../../sim/useSimulacao';
-import { orcarCenario, paraLocais, totalConflitos, totalInfracoes } from '../../sim/cenarios';
+import { orcarCenario, paraLocais, rodarCenario, totalConflitos, totalInfracoes } from '../../sim/cenarios';
 import { IconeIntervencao } from './IconeIntervencao';
+import { CartaoSugestoes, type Assistente } from './Sugestoes';
 import { ComparacaoCenarios } from './ComparacaoCenarios';
 import { ALCANCE, COR_ZONA, GRUPOS, tintaSobre } from './zonasIntervencao';
 
@@ -67,15 +69,77 @@ const EditorTempos: React.FC<{ tempos: TemposSemaforo; onMudar: (t: TemposSemafo
   );
 };
 
+/** Título de etapa numerada: guia o operador pelo fluxo 1 → 2 → 3. */
+const Etapa: React.FC<{ n: number; titulo: string; dica?: string; feita?: boolean; children?: React.ReactNode }> = ({ n, titulo, dica, feita, children }) => (
+  <div className="flex items-start gap-2.5 mb-2.5">
+    <span
+      className={`shrink-0 w-6 h-6 rounded-full text-[11px] font-extrabold flex items-center justify-center ${
+        feita ? 'bg-emerald-600 text-white' : 'bg-gov-navy text-white'
+      }`}
+    >
+      {n}
+    </span>
+    <div className="min-w-0 flex-1">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-extrabold text-slate-900 leading-6">{titulo}</h3>
+        {children}
+      </div>
+      {dica && <p className="text-[11px] text-slate-500 leading-snug">{dica}</p>}
+    </div>
+  </div>
+);
+
+/** Variação em relação ao cruzamento sem intervenções (menor é melhor). */
+const Variacao: React.FC<{ agora: number; base: number | undefined; inverter?: boolean }> = ({ agora, base, inverter }) => {
+  if (base === undefined || base <= 0) return null;
+  const pct = Math.round((agora / base - 1) * 100);
+  if (pct === 0) return <span className="text-[10px] font-bold text-slate-500">igual a hoje</span>;
+  const melhor = inverter ? pct > 0 : pct < 0;
+  const Icone = pct < 0 ? TrendingDown : TrendingUp;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${melhor ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
+      <Icone className="w-3 h-3" />
+      {pct > 0 ? '+' : ''}
+      {pct}% vs hoje
+    </span>
+  );
+};
+
 interface Props {
   sim: Simulacao;
+  assistente?: Assistente;
 }
 
-export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
+export const PainelIntervencoes: React.FC<Props> = ({ sim, assistente }) => {
   const [comparacaoAberta, setComparacaoAberta] = useState(false);
   const custoPorId = new Map((sim.orcamento?.itens ?? []).map((i) => [i.intervencao.id, i.orcamento]));
   const m = sim.metricas;
   const minutos = m ? m.horas * 60 : 0;
+  // "Hoje" = o cruzamento sem intervenções, rodado fora da tela do mesmo jeito que a tela Comparar
+  // (aquecimento de 6 min, 3 sementes, 1 h), na hora cheia do relógio. Refaz quando a hora muda.
+  const [base, setBase] = useState<Metricas | null>(null);
+  const [calculandoBase, setCalculandoBase] = useState(false);
+  const horaBase = Math.floor(sim.hora);
+  const rede = sim.rede;
+  useEffect(() => {
+    if (!sim.pronto || !rede) return;
+    let vivo = true;
+    setBase(null);
+    setCalculandoBase(true);
+    rodarCenario(rede, [], { hora: horaBase })
+      .then((r) => vivo && setBase(r.metricas))
+      .catch(() => undefined)
+      .finally(() => vivo && setCalculandoBase(false));
+    return () => {
+      vivo = false;
+    };
+  }, [sim.pronto, rede, horaBase]);
+  // Quem perdeu a conversão à esquerda: volta pelo bairro (fora do mapa) ou retorno legal
+  const fluxo = sim.motorRef.current?.fluxoRetorno;
+  const horasFluxo = Math.max(minutos / 60, 1 / 60);
+  const temFechado = sim.intervencoes.some((i) => i.tipo === 'fechar_canteiro' && sim.analises.get(i.id)?.valida);
+  const temRetorno = sim.intervencoes.some((i) => i.tipo === 'retorno' && sim.analises.get(i.id)?.valida && !sim.analises.get(i.id)?.regulariza);
+  const comparar = m && base && sim.intervencoes.length > 0 && minutos >= 10;
   const ritmo = !sim.rodando
     ? 'A simulação está pausada.'
     : sim.velocidade === 1
@@ -99,20 +163,22 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="bg-gov-navy text-white px-5 py-4 border-b border-slate-800">
-        <h2 className="text-lg font-extrabold tracking-tight">Onde cada intervenção age</h2>
-        <p className="text-xs text-slate-300 mt-0.5">
-          A mancha colorida no mapa é a área que muda o trânsito. O ícone só marca a alça: arraste para mudar de lugar.
-        </p>
+      <div className="bg-gov-navy text-white px-4 py-2.5 border-b border-slate-800">
+        <h2 className="text-sm font-extrabold tracking-tight leading-tight">Teste uma solução para o cruzamento</h2>
+        <p className="text-[11px] text-slate-300">Coloque, rode e compare com o cruzamento como está hoje.</p>
       </div>
 
-      <div className="p-4 sm:p-5 space-y-5 flex-1 min-h-0 overflow-y-auto">
+      <div className="p-4 space-y-4 flex-1 min-h-0 overflow-y-auto">
         {/* Paleta */}
-        <section aria-label="Intervenções disponíveis" className="space-y-3">
+        <section aria-label="Intervenções disponíveis" className="space-y-2">
+          <Etapa n={1} titulo="Escolha e coloque no mapa" dica="Clique numa intervenção e depois no mapa, ou arraste direto. A mancha colorida é onde ela age." feita={sim.intervencoes.length > 0}>
+            <MousePointerClick className="w-4 h-4 text-slate-400" />
+          </Etapa>
+          {assistente && <CartaoSugestoes assistente={assistente} />}
           {GRUPOS.map((g) => (
             <div key={g.categoria}>
-              <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1.5">{g.titulo}</h3>
-              <div className="grid grid-cols-2 gap-1.5">
+              <h3 className="text-[10px] font-bold uppercase tracking-wide text-slate-500 mb-1">{g.titulo}</h3>
+              <div className="grid grid-cols-3 gap-1.5">
                 {CATALOGO.filter((d) => d.categoria === g.categoria).map((d) => {
                   const ativo = sim.modoColocar === d.tipo;
                   return (
@@ -124,12 +190,12 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
                       onClick={() => sim.setModoColocar(ativo ? null : d.tipo)}
                       aria-pressed={ativo}
                       title={`${d.resumo} ${ALCANCE[d.tipo]}. ${d.ondeSoltar}`}
-                      className={`flex items-center gap-1.5 rounded-xl border px-1.5 py-1.5 text-left transition-colors cursor-grab active:cursor-grabbing focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700 ${
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border px-1 py-1.5 text-center min-h-[64px] transition-colors cursor-grab active:cursor-grabbing focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700 ${
                         ativo ? 'border-blue-700 bg-blue-50 ring-1 ring-blue-700/30' : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-slate-300'
                       }`}
                     >
-                      <IconeIntervencao tipo={d.tipo} tamanho={28} />
-                      <span className="text-[11px] font-semibold text-slate-900 leading-tight">{d.nome}</span>
+                      <IconeIntervencao tipo={d.tipo} tamanho={26} />
+                      <span className="text-[10.5px] font-semibold text-slate-900 leading-tight">{d.nome}</span>
                     </button>
                   );
                 })}
@@ -154,8 +220,8 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
             )}
           </div>
           {sim.intervencoes.length === 0 ? (
-            <p className="text-xs text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-xl px-3 py-3">
-              Nada colocado: este é o cruzamento como está hoje. Escolha uma intervenção e clique no mapa. A mancha colorida marca onde ela age.
+            <p className="text-xs text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-xl px-3 py-2">
+              Nada colocado: este é o cruzamento como está hoje.
             </p>
           ) : (
             <ul className="space-y-2">
@@ -206,6 +272,11 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
                             {ALCANCE[i.tipo]}. {valida ? 'Essa mancha, no mapa, é o trecho que muda.' : DEFINICAO[i.tipo].ondeSoltar}
                           </p>
                         )}
+                        {i.tipo === 'fechar_canteiro' && valida && !temRetorno && (
+                          <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 mt-1">
+                            Sem retorno legal: quem queria virar à esquerda vai dar a volta pelo bairro. Coloque um Retorno (o assistente sugere onde).
+                          </p>
+                        )}
                         {sel && DEFINICAO[i.tipo].observacao && <p className="text-[11px] text-amber-800 mt-1">{DEFINICAO[i.tipo].observacao}</p>}
                         {sel && i.tipo === 'semaforo' && (
                           <EditorTempos tempos={i.tempos ?? TEMPOS_PADRAO} onMudar={(t) => sim.atualizarTempos(i.id, t)} />
@@ -238,22 +309,55 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
 
         {/* Resultado ao vivo */}
         <section aria-label="Resultado na simulação">
-          <h3 className="text-sm font-bold text-slate-900">Efeito do que está no mapa</h3>
-          <p className="text-[11px] text-slate-500 mb-2">
-            {ritmo} Valores por hora, desde a última mudança de lugar ou de hora
-            {minutos < 15 ? ' (amostra curta, espere um pouco)' : ''}, em {num(minutos)} min simulados.
-          </p>
+          <Etapa
+            n={2}
+            titulo="Veja o efeito"
+            dica={`${ritmo} Valores por hora, em ${num(minutos)} min simulados${minutos < 15 ? ' (amostra curta, espere um pouco)' : ''}.`}
+            feita={minutos >= 15}
+          />
+          {calculandoBase && (
+            <p className="text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2">
+              Calculando o cruzamento de hoje às {horaBase}h para comparar…
+            </p>
+          )}
+          {m && (
+            <div className={`rounded-xl px-3.5 py-3 mb-2 text-white ${m.risco >= (base?.risco ?? Infinity) * 0.9 || !comparar ? 'bg-gradient-to-br from-gov-navy to-slate-800' : 'bg-gradient-to-br from-emerald-700 to-emerald-900'}`}>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-semibold text-slate-200">Índice de risco por hora</span>
+                {comparar && <Variacao agora={m.risco} base={base?.risco} />}
+              </div>
+              <div className="text-3xl font-extrabold tabular-nums leading-tight">{num(m.risco)}</div>
+              <p className="text-[10px] text-slate-300">
+                Quase-acidentes pesados pela gravidade e por quem está exposto (pedestre e moto pesam mais).
+                {comparar && base ? ` Hoje: ${num(base.risco)}.` : ''}
+              </p>
+            </div>
+          )}
+          {fluxo && (temFechado || temRetorno) && minutos >= 3 && (
+            <div className={`rounded-xl border px-3 py-2 mb-2 text-[11px] ${temRetorno ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-amber-300 bg-amber-50 text-amber-900'}`}>
+              <p className="font-bold text-xs mb-0.5">Para onde foi quem queria virar à esquerda</p>
+              <p>
+                <strong className="tabular-nums">{num(fluxo.retornoLegal / horasFluxo)}</strong> por hora usam retorno legal no mapa ·{' '}
+                <strong className="tabular-nums">{num(fluxo.desvioExterno / horasFluxo)}</strong> por hora dão a volta pelo bairro
+                {fluxo.desvioExterno > 0 && <> (≈{(fluxo.kmDesvio / fluxo.desvioExterno).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km a mais, fora do mapa)</>}.
+              </p>
+              {!temRetorno && <p className="mt-0.5">Sem retorno legal perto, eles não seguem “de graça”: o desvio entra no atraso médio. Veja a sugestão de Retorno acima.</p>}
+            </div>
+          )}
           <dl className="grid grid-cols-2 gap-2">
             {[
-              { rotulo: 'Quase-acidentes', valor: m ? num(totalConflitos(m)) : '–', extra: m ? `${num(m.conflitosGraves)} graves` : '' },
-              { rotulo: 'Infrações', valor: m ? num(totalInfracoes(m)) : '–', extra: m ? `${num(m.infracoes.conversao_proibida + m.infracoes.retorno_proibido)} manobras proibidas` : '' },
-              { rotulo: 'Atraso médio', valor: m ? `${num(m.atrasoMedio)} s` : '–', extra: 'por veículo' },
-              { rotulo: 'Espera do pedestre', valor: m ? `${num(m.esperaMediaPedestre)} s` : '–', extra: 'para atravessar' },
+              { rotulo: 'Quase-acidentes', valor: m ? num(totalConflitos(m)) : '–', extra: m ? `${num(m.conflitosGraves)} graves` : '', agora: m ? totalConflitos(m) : 0, b: base ? totalConflitos(base) : undefined },
+              { rotulo: 'Infrações', valor: m ? num(totalInfracoes(m)) : '–', extra: m ? `${num(m.infracoes.conversao_proibida + m.infracoes.retorno_proibido)} manobras proibidas` : '', agora: m ? totalInfracoes(m) : 0, b: base ? totalInfracoes(base) : undefined },
+              { rotulo: 'Atraso médio', valor: m ? `${num(m.atrasoMedio)} s` : '–', extra: 'por veículo', agora: m?.atrasoMedio ?? 0, b: base?.atrasoMedio },
+              { rotulo: 'Espera do pedestre', valor: m ? `${num(m.esperaMediaPedestre)} s` : '–', extra: 'para atravessar', agora: m?.esperaMediaPedestre ?? 0, b: base?.esperaMediaPedestre },
             ].map((k) => (
               <div key={k.rotulo} className="rounded-xl bg-slate-50 border border-slate-200 px-3 py-2">
                 <dt className="text-[11px] text-slate-500">{k.rotulo}</dt>
-                <dd className="text-base font-extrabold text-slate-900 tabular-nums leading-tight">{k.valor}</dd>
-                <dd className="text-[10px] text-slate-500">{k.extra}</dd>
+                <dd className="text-lg font-extrabold text-slate-900 tabular-nums leading-tight">{k.valor}</dd>
+                <dd className="text-[10px] text-slate-500 flex flex-wrap items-center gap-1">
+                  {k.extra}
+                  {comparar && <Variacao agora={k.agora} base={k.b} />}
+                </dd>
               </div>
             ))}
           </dl>
@@ -278,7 +382,7 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
 
         {/* Cenários */}
         <section aria-label="Cenários salvos">
-          <h3 className="text-sm font-bold text-slate-900 mb-2">Cenários salvos</h3>
+          <Etapa n={3} titulo="Guarde e compare" dica="Salve o que está no mapa como A ou B e compare com o cruzamento de hoje." feita={!!(sim.cenarios.A || sim.cenarios.B)} />
           <div className="space-y-2">
             {(['A', 'B'] as IdCenario[]).map((id) => {
               const resumo = resumoCenario(id);
@@ -314,14 +418,30 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
         </section>
       </div>
 
-      <footer className="border-t border-slate-200 bg-white px-4 py-3 shrink-0">
+      <footer className="border-t border-slate-200 bg-white px-4 py-3 shrink-0 space-y-2.5">
+        {m && (
+          <div className="grid grid-cols-3 gap-1.5" aria-label="Resultado ao vivo">
+            {[
+              { rotulo: 'Risco/h', agora: m.risco, b: base?.risco },
+              { rotulo: 'Quase-acidentes/h', agora: totalConflitos(m), b: base ? totalConflitos(base) : undefined },
+              { rotulo: 'Infrações/h', agora: totalInfracoes(m), b: base ? totalInfracoes(base) : undefined },
+            ].map((k) => (
+              <div key={k.rotulo} className="rounded-lg bg-slate-50 border border-slate-200 px-2 py-1.5">
+                <div className="text-[10px] text-slate-500 leading-tight">{k.rotulo}</div>
+                <div className="text-sm font-extrabold tabular-nums text-slate-900 leading-tight">{num(k.agora)}</div>
+                {comparar ? <Variacao agora={k.agora} base={k.b} /> : <span className="text-[10px] text-slate-400">{sim.intervencoes.length === 0 ? (base ? `hoje: ${num(k.b ?? 0)}` : 'calculando…') : 'medindo…'}</span>}
+              </div>
+            ))}
+          </div>
+        )}
         <button
           type="button"
           onClick={() => setComparacaoAberta(true)}
           disabled={!sim.pronto}
-          className="w-full rounded-xl bg-gov-navy text-white text-sm font-bold py-2.5 hover:bg-blue-900 disabled:bg-slate-300 disabled:text-slate-500"
+          className="w-full rounded-xl bg-blue-700 text-white text-sm font-bold py-3 hover:bg-blue-800 disabled:bg-slate-300 disabled:text-slate-500 flex items-center justify-center gap-2 shadow-sm"
         >
-          Comparar atual, A e B
+          <BarChart3 className="w-4 h-4" />
+          Comparar hoje × A × B
         </button>
       </footer>
 

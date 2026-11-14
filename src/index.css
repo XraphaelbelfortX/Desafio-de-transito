@@ -38,3 +38,12 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Cartões embutidos nas abas do painel lateral: sem moldura dupla */
+.painel-embutido > section,
+.painel-embutido > div {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.painel-embutido ol { max-height: none !important; }
