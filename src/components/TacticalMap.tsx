@@ -26,6 +26,30 @@ import {
 } from 'lucide-react';
 import { Incident } from '../types';
 import { INTERSECTION_CENTER } from '../data/mockData';
+import { RedeLayer, REDE_LAYER_IDS, ROTULO_TIPO } from './RedeLayer';
+
+/** Fundo de satélite (Esri World Imagery), sem necessidade de token. */
+const SATELITE_STYLE = {
+  version: 8 as const,
+  sources: {
+    esri: {
+      type: 'raster' as const,
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      ],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: 'Imagens © Esri, Maxar, Earthstar Geographics',
+    },
+  },
+  layers: [{ id: 'satelite', type: 'raster' as const, source: 'esri' }],
+};
+
+interface FeicaoRede {
+  lng: number;
+  lat: number;
+  props: Record<string, unknown>;
+}
 
 /**
  * Substitua pelo seu token Mapbox real (ex: pk.eyJ1Ijoi...)
@@ -88,6 +112,18 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [customToken, setCustomToken] = useState<string>(MAPBOX_TOKEN);
   const [showTokenInput, setShowTokenInput] = useState(false);
+  const [showRede, setShowRede] = useState(true);
+  const [feicaoRede, setFeicaoRede] = useState<FeicaoRede | null>(null);
+
+  /** Clique numa feição da rede de faixas: abre o popup com os dados dela. */
+  const handleRedeClick = (evt: MapLayerMouseEvent) => {
+    const f = evt.features?.[0];
+    if (!f) {
+      setFeicaoRede(null);
+      return;
+    }
+    setFeicaoRede({ lng: evt.lngLat.lng, lat: evt.lngLat.lat, props: f.properties ?? {} });
+  };
 
   // Estados da Visão 3D Interativa (SimCity) e Construtor de Tartarugas 3D
   const [is3DMode, setIs3DMode] = useState<boolean>(true);
@@ -136,7 +172,11 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
   // Clique no mapa para adicionar Tartarugas 3D ou Balizadores 3D manualmente na pista
   const handleMapClick = (e: MapLayerMouseEvent) => {
-    if (placementTool === 'none') return;
+    // Sem ferramenta de colocação ativa, o clique serve para inspecionar a rede de faixas
+    if (placementTool === 'none') {
+      handleRedeClick(e);
+      return;
+    }
     const { lng, lat } = e.lngLat;
 
     if (placementTool === 'tachao') {
@@ -420,11 +460,13 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         mapboxAccessToken={isPlaceholderToken ? undefined : customToken}
         mapStyle={
           isPlaceholderToken
-            ? 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json'
-            : 'mapbox://styles/mapbox/streets-v12'
+            ? SATELITE_STYLE
+            : 'mapbox://styles/mapbox/satellite-streets-v12'
         }
+        interactiveLayerIds={showRede ? [...REDE_LAYER_IDS] : []}
+        cursor={feicaoRede ? 'pointer' : undefined}
         style={{ width: '100%', height: '100%' }}
-        attributionControl={false}
+        attributionControl={true}
       >
         <NavigationControl position="bottom-right" showCompass={true} visualizePitch={true} />
 
@@ -432,6 +474,43 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         <Source id="incidents-source" type="geojson" data={incidentsGeoJson}>
           <Layer {...heatmapLayer} />
         </Source>
+
+        {/* Rede de faixas (gerada por scripts/gera-rede.mjs) */}
+        <RedeLayer visible={showRede} />
+
+        {feicaoRede && (
+          <Popup
+            longitude={feicaoRede.lng}
+            latitude={feicaoRede.lat}
+            anchor="bottom"
+            offset={10}
+            onClose={() => setFeicaoRede(null)}
+            closeOnClick={false}
+          >
+            <div className="p-1 max-w-[240px] text-slate-800 text-[11px] leading-snug">
+              <p className="text-[10px] font-bold uppercase text-slate-500">
+                {ROTULO_TIPO[String(feicaoRede.props.tipo)] ?? String(feicaoRede.props.tipo)}
+              </p>
+              <p className="text-xs font-bold text-slate-900">{String(feicaoRede.props.nome ?? '')}</p>
+              <p className="font-mono text-[10px] text-slate-500">id: {String(feicaoRede.props.id)}</p>
+              {feicaoRede.props.sentido != null && <p>Sentido: {String(feicaoRede.props.sentido)}</p>}
+              {feicaoRede.props.tipo === 'movimento' && (
+                <>
+                  <p>
+                    Sinalização:{' '}
+                    <strong className={feicaoRede.props.permitido === true ? 'text-emerald-700' : 'text-red-700'}>
+                      {feicaoRede.props.permitido === true ? 'permitido' : 'proibido (infração possível)'}
+                    </strong>
+                  </p>
+                  {feicaoRede.props.conflito != null && <p>Conflito: {String(feicaoRede.props.conflito).replace(/_/g, ' ')}</p>}
+                  {feicaoRede.props.fechado_por != null && (
+                    <p>Deixa de existir com: {String(feicaoRede.props.fechado_por).replace(/_/g, ' ')}</p>
+                  )}
+                </>
+              )}
+            </div>
+          </Popup>
+        )}
 
         {/* Avanço de Calçada (Neckdown) em 2D e Extrusão 3D Volumétrica */}
         {activeInterventions.includes('neckdown') && (
@@ -766,6 +845,24 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           >
             <Crosshair className="w-3.5 h-3.5 text-blue-700" />
             <span>Focar Intersecção</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowRede((prev) => !prev);
+              setFeicaoRede(null);
+            }}
+            aria-pressed={showRede}
+            title="Mostrar/ocultar a rede de faixas"
+            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg shadow border transition ${
+              showRede
+                ? 'bg-blue-700 text-white border-blue-800 hover:bg-blue-800'
+                : 'bg-white/95 text-slate-700 border-slate-200 hover:bg-white'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Rede de faixas</span>
           </button>
 
           <button
