@@ -104,7 +104,7 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
           </div>
 
           <div className="text-xs text-slate-500 font-mono">
-            Coordenadas: -2.55556, -44.27128 • Cruzamento Coroado / Parque Timbiras
+            Coordenadas: -2.55498, -44.27049 • Cruzamento Coroado / Parque Timbiras
           </div>
         </div>
 

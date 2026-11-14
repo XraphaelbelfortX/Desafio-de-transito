@@ -53,8 +53,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     latitude: INTERSECTION_CENTER.lat,
     longitude: INTERSECTION_CENTER.lng,
     zoom: INTERSECTION_CENTER.zoom,
-    pitch: 35,
-    bearing: -18,
+    pitch: 0,
+    bearing: 0,
   });
 
   const isPlaceholderToken =
@@ -62,15 +62,24 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     customToken.trim() === '' ||
     customToken.trim() === 'YOUR_MAPBOX_TOKEN';
 
-  // GeoJSON dinâmico construído a partir do estado `incidents`, concentrando o calor
-  // exatamente no entroncamento da Av. dos Africanos × Av. Vicente Venâncio de Queiroga
+  // GeoJSON dinâmico construído a partir do estado `incidents`, preenchendo exatamente
+  // o perímetro do círculo vermelho (duas pistas da Av. dos Africanos + Vicente Venâncio de Queiroga + Rua Minerva + Retorno)
   const incidentsGeoJson = useMemo(() => {
     const coreIntersectionPoints = [
-      { lng: -44.27128, lat: -2.55556, weight: 1.0 },
-      { lng: -44.27126, lat: -2.55560, weight: 1.0 },
-      { lng: -44.27130, lat: -2.55554, weight: 0.95 },
-      { lng: -44.27123, lat: -2.55563, weight: 0.95 },
-      { lng: -44.27134, lat: -2.55558, weight: 0.9 },
+      // Centro do cruzamento (Canteiro Central / Travessia Vicente Venâncio -> Rua Minerva)
+      { lng: -44.27049, lat: -2.55498, weight: 1.0 },
+      // Cruzamento Pista Sul da Av. dos Africanos × Av. Vicente Venâncio de Queiroga
+      { lng: -44.27058, lat: -2.55508, weight: 1.0 },
+      // Cruzamento Pista Norte da Av. dos Africanos × Rua Minerva
+      { lng: -44.27039, lat: -2.55488, weight: 1.0 },
+      // Agulha de retorno diagonal entre as duas pistas (noroeste do círculo vermelho)
+      { lng: -44.27065, lat: -2.55489, weight: 0.95 },
+      { lng: -44.27070, lat: -2.55478, weight: 0.9 },
+      { lng: -44.27060, lat: -2.55502, weight: 0.95 },
+      // Eixo central tracejado (ciclovia/canteiro dentro do círculo vermelho)
+      { lng: -44.27056, lat: -2.55492, weight: 0.95 },
+      { lng: -44.27041, lat: -2.55504, weight: 0.95 },
+      { lng: -44.27035, lat: -2.55507, weight: 0.9 },
     ];
 
     return {
@@ -126,11 +135,11 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           ['linear'],
           ['zoom'],
           13,
-          1.6 * mitigationFactor,
-          17,
-          3.4 * mitigationFactor,
+          1.8 * mitigationFactor,
+          17.8,
+          3.5 * mitigationFactor,
           20,
-          4.2 * mitigationFactor,
+          4.4 * mitigationFactor,
         ],
         'heatmap-color': [
           'interpolate',
@@ -139,13 +148,13 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           0,
           'rgba(37, 99, 235, 0)',
           0.18,
-          'rgba(59, 130, 246, 0.45)',
+          'rgba(59, 130, 246, 0.48)',
           0.38,
-          'rgba(250, 204, 21, 0.78)',
+          'rgba(250, 204, 21, 0.80)',
           0.62,
-          'rgba(249, 115, 22, 0.90)',
+          'rgba(249, 115, 22, 0.92)',
           0.82,
-          'rgba(239, 68, 68, 0.96)',
+          'rgba(239, 68, 68, 0.97)',
           1,
           'rgba(153, 27, 27, 1)',
         ],
@@ -154,34 +163,44 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           ['linear'],
           ['zoom'],
           14,
-          36,
-          17.5,
-          78,
+          40,
+          17.8,
+          86,
           19,
-          110,
+          120,
         ],
         'heatmap-opacity': 0.88,
       },
     };
   }, [riskReduction]);
 
-  // Geometria de Urbanismo Tático (estilo SimCity) alinhada ao cruzamento real:
-  // Av. dos Africanos × Av. Vicente Venâncio de Queiroga (-2.55556, -44.27128)
+  // Geometria de Urbanismo Tático (estilo SimCity) posicionada exatamente dentro do círculo vermelho:
+  // Eixo central da Av. dos Africanos + Travessia Vicente Venâncio de Queiroga / Rua Minerva
   const ciclofaixaGeoJson = useMemo(
     () => ({
       type: 'FeatureCollection' as const,
       features: [
         {
           type: 'Feature' as const,
-          properties: { name: 'Ciclofaixa Vermelha - Av. dos Africanos × Vicente Venâncio de Queiroga' },
+          properties: { name: 'Ciclofaixa Central - Av. dos Africanos' },
           geometry: {
             type: 'LineString' as const,
             coordinates: [
-              [-44.27182, -2.55534],
-              [-44.27148, -2.55548],
-              [-44.27128, -2.55556],
-              [-44.27105, -2.55565],
-              [-44.27072, -2.55578],
+              [-44.27076, -2.55481],
+              [-44.27049, -2.55498],
+              [-44.27024, -2.55514],
+            ],
+          },
+        },
+        {
+          type: 'Feature' as const,
+          properties: { name: 'Travessia Cicloviária - Vicente Venâncio × Rua Minerva' },
+          geometry: {
+            type: 'LineString' as const,
+            coordinates: [
+              [-44.27064, -2.55514],
+              [-44.27049, -2.55498],
+              [-44.27034, -2.55482],
             ],
           },
         },
@@ -190,39 +209,39 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     []
   );
 
-  // Avanços de Calçada (Neckdowns) nas duas esquinas da boca da Av. Vicente Venâncio de Queiroga
+  // Avanços de Calçada (Neckdowns) nas esquinas das duas pistas dentro do círculo vermelho
   const neckdownGeoJson = useMemo(
     () => ({
       type: 'FeatureCollection' as const,
       features: [
         {
           type: 'Feature' as const,
-          properties: { name: 'Avanço de Calçada - Esquina Oeste (Vicente Venâncio)' },
+          properties: { name: 'Avanço de Calçada - Esquina Pista Sul (Vicente Venâncio)' },
           geometry: {
             type: 'Polygon' as const,
             coordinates: [
               [
-                [-44.27141, -2.55556],
-                [-44.27131, -2.55559],
-                [-44.27134, -2.55568],
-                [-44.27144, -2.55565],
-                [-44.27141, -2.55556],
+                [-44.27065, -2.55505],
+                [-44.27055, -2.55505],
+                [-44.27055, -2.55513],
+                [-44.27065, -2.55513],
+                [-44.27065, -2.55505],
               ],
             ],
           },
         },
         {
           type: 'Feature' as const,
-          properties: { name: 'Avanço de Calçada - Esquina Leste (Vicente Venâncio)' },
+          properties: { name: 'Avanço de Calçada - Esquina Pista Norte (Rua Minerva)' },
           geometry: {
             type: 'Polygon' as const,
             coordinates: [
               [
-                [-44.27122, -2.55562],
-                [-44.27112, -2.55566],
-                [-44.27115, -2.55575],
-                [-44.27125, -2.55571],
-                [-44.27122, -2.55562],
+                [-44.27044, -2.55484],
+                [-44.27034, -2.55484],
+                [-44.27034, -2.55492],
+                [-44.27044, -2.55492],
+                [-44.27044, -2.55484],
               ],
             ],
           },
@@ -232,15 +251,15 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     []
   );
 
-  // Linha de Tachões Refletivos exatamente na garganta da intersecção
+  // Linha de Tachões Refletivos nas duas pistas e no retorno dentro do círculo vermelho
   const tachoesCoords: [number, number][] = useMemo(
     () => [
-      [-44.27146, -2.55550],
-      [-44.27139, -2.55553],
-      [-44.27132, -2.55556],
-      [-44.27125, -2.55559],
-      [-44.27118, -2.55562],
-      [-44.27111, -2.55565],
+      [-44.27065, -2.55489],
+      [-44.27060, -2.55502],
+      [-44.27055, -2.55506],
+      [-44.27049, -2.55498],
+      [-44.27043, -2.55491],
+      [-44.27038, -2.55486],
     ],
     []
   );
@@ -250,8 +269,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       latitude: INTERSECTION_CENTER.lat,
       longitude: INTERSECTION_CENTER.lng,
       zoom: INTERSECTION_CENTER.zoom,
-      pitch: 35,
-      bearing: -18,
+      pitch: 0,
+      bearing: 0,
     });
   };
 
@@ -273,7 +292,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       >
         <NavigationControl position="bottom-right" showCompass={true} />
 
-        {/* Camada Nativa de Heatmap de Quase-Acidentes centrada na intersecção */}
+        {/* Camada Nativa de Heatmap de Quase-Acidentes exatamente no círculo vermelho */}
         <Source id="incidents-source" type="geojson" data={incidentsGeoJson}>
           <Layer {...heatmapLayer} />
         </Source>
