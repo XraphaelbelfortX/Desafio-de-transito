@@ -84,9 +84,9 @@ const enviar = (mapa: { getSource: (id: string) => unknown }, id: string, dados:
 const pinturaCalor = (paradas: (number | string)[]) =>
   ({
     'heatmap-weight': ['get', 'peso'],
-    'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 15, 0.7, 18, 1.3],
-    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 15, 14, 17, 30, 19, 52],
-    'heatmap-opacity': 0.88,
+    'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 15, 1.4, 18, 2.4],
+    'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 15, 20, 17, 42, 19, 72],
+    'heatmap-opacity': 0.9,
     'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'], ...paradas],
   }) as HeatmapLayerSpecification['paint'];
 
@@ -94,13 +94,14 @@ interface Props {
   sim: Simulacao;
   mancha: Mancha;
   onCamadas: (prontas: boolean) => void;
+  onPontos: (conflitos: number, infracoes: number) => void;
 }
 
 /**
  * Agentes, semáforos, pulsos e mancha da simulação.
  * O GeoJSON vai direto para a fonte do mapa: nada disso entra no estado do React.
  */
-export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas }) => {
+export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPontos }) => {
   const { current } = useMap();
   const selecionadoRef = useRef(sim.selecionadoId);
   const manchaRef = useRef(mancha);
@@ -138,6 +139,8 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas }) => 
     if (!mapa || !rede) return;
     const quadro = rede.quadro;
     let ultimoCalor = 0;
+    let conflitosAntes = -1;
+    let infracoesAntes = -1;
 
     const desenhar = () => {
       const motor = sim.motorRef.current;
@@ -193,14 +196,21 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas }) => 
       if (agora - ultimoCalor > 500) {
         ultimoCalor = agora;
         const eventos = motor.eventos;
-        enviar(mapa, 'sim-calor-conflitos', pontos(quadro, eventos, 'conflito'));
-        enviar(mapa, 'sim-calor-infracoes', pontos(quadro, eventos, 'infracao'));
+        const conflitos = pontos(quadro, eventos, 'conflito');
+        const infracoes = pontos(quadro, eventos, 'infracao');
+        enviar(mapa, 'sim-calor-conflitos', conflitos);
+        enviar(mapa, 'sim-calor-infracoes', infracoes);
+        if (conflitos.features.length !== conflitosAntes || infracoes.features.length !== infracoesAntes) {
+          conflitosAntes = conflitos.features.length;
+          infracoesAntes = infracoes.features.length;
+          onPontos(conflitosAntes, infracoesAntes);
+        }
       }
     };
 
     desenhar();
     return sim.assinar(desenhar);
-  }, [current, sim.assinar, sim.motorRef, sim.pulsos, sim.rede]);
+  }, [current, onPontos, sim.assinar, sim.motorRef, sim.pulsos, sim.rede]);
 
   const visivel = (qual: Mancha) => (mancha === qual ? 'visible' : 'none') as 'visible' | 'none';
 
@@ -213,10 +223,11 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas }) => 
           layout={{ visibility: visivel('conflitos') }}
           paint={pinturaCalor([
             0, 'rgba(251, 146, 60, 0)',
-            0.2, 'rgba(249, 115, 22, 0.45)',
-            0.45, 'rgba(234, 88, 12, 0.75)',
-            0.7, 'rgba(185, 28, 28, 0.9)',
-            1, 'rgba(69, 10, 10, 0.98)',
+            0.05, 'rgba(251, 146, 60, 0.55)',
+            0.18, 'rgba(249, 115, 22, 0.75)',
+            0.4, 'rgba(220, 38, 38, 0.9)',
+            0.7, 'rgba(127, 29, 29, 0.96)',
+            1, 'rgba(69, 10, 10, 1)',
           ])}
         />
       </Source>
@@ -227,10 +238,11 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas }) => 
           layout={{ visibility: visivel('infracoes') }}
           paint={pinturaCalor([
             0, 'rgba(244, 114, 182, 0)',
-            0.22, 'rgba(244, 114, 182, 0.5)',
-            0.5, 'rgba(192, 38, 211, 0.78)',
-            0.78, 'rgba(126, 34, 206, 0.92)',
-            1, 'rgba(59, 7, 100, 0.98)',
+            0.05, 'rgba(244, 114, 182, 0.55)',
+            0.2, 'rgba(219, 39, 119, 0.78)',
+            0.45, 'rgba(147, 51, 234, 0.9)',
+            0.75, 'rgba(88, 28, 135, 0.96)',
+            1, 'rgba(59, 7, 100, 1)',
           ])}
         />
       </Source>

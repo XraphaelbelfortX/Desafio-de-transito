@@ -106,6 +106,10 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const mapRef = useRef<MapRef>(null);
   const [soltando, setSoltando] = useState(false);
   const [mancha, setMancha] = useState<Mancha>('conflitos');
+  const [pontosSim, setPontosSim] = useState({ conflitos: 0, infracoes: 0 });
+  const aoPontos = useCallback((conflitos: number, infracoes: number) => {
+    setPontosSim((atual) => (atual.conflitos === conflitos && atual.infracoes === infracoes ? atual : { conflitos, infracoes }));
+  }, []);
   const [camadasAgentes, setCamadasAgentes] = useState(false);
   const aoCamadas = useCallback((prontas: boolean) => {
     setCamadasAgentes((atual) => (atual === prontas ? atual : prontas));
@@ -389,7 +393,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         <RedeLayer visible={showRede} />
 
         {/* Agentes, semáforos e mancha da simulação (GeoJSON direto na fonte, sem estado React) */}
-        <CamadaSimulacao sim={sim} mancha={mancha} onCamadas={aoCamadas} />
+        <CamadaSimulacao sim={sim} mancha={mancha} onCamadas={aoCamadas} onPontos={aoPontos} />
 
         {feicaoRede && (
           <Popup
@@ -643,7 +647,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
       {/* Mancha, legenda e controles de tempo no canto inferior esquerdo */}
       <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-2 items-start max-w-[min(100%-5.5rem,440px)]">
-        <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} />
+        <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} rodando={sim.rodando} pontosSim={pontosSim} />
         <ControlesTempo
           rodando={sim.rodando}
           onRodando={sim.setRodando}

@@ -21,11 +21,22 @@ interface Props {
   mancha: Mancha;
   onMancha: (m: Mancha) => void;
   erro: string | null;
+  rodando: boolean;
+  pontosSim: { conflitos: number; infracoes: number };
 }
 
 /** Seletor da mancha e legenda dos agentes, no canto do mapa. */
-export const SeletorMancha: React.FC<Props> = ({ mancha, onMancha, erro }) => {
+export const SeletorMancha: React.FC<Props> = ({ mancha, onMancha, erro, rodando, pontosSim }) => {
   const ativa = OPCOES.find((o) => o.id === mancha) ?? OPCOES[0];
+  const pontos = mancha === 'relatos' ? null : pontosSim[mancha];
+  const aviso =
+    pontos === null
+      ? 'Relatos que já chegaram. Não mudam com a simulação.'
+      : pontos === 0
+        ? rodando
+          ? 'Ainda vazia. A simulação pinta aqui conforme registra.'
+          : 'Ainda vazia. A simulação está pausada.'
+        : `${pontos.toLocaleString('pt-BR')} ${pontos === 1 ? 'ponto' : 'pontos'} nesta configuração.`;
   return (
     <div className="bg-white/95 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-200 shadow-md text-[11px] text-slate-700 max-w-full">
       <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Mancha do mapa">
@@ -49,6 +60,7 @@ export const SeletorMancha: React.FC<Props> = ({ mancha, onMancha, erro }) => {
         <div className={`w-24 h-2 rounded-full bg-gradient-to-r ${ativa.rampa}`} />
         <span className="text-[10px] font-semibold text-slate-700">Muitos</span>
       </div>
+      <p className="text-[10px] text-slate-500 mt-1 leading-snug">{aviso}</p>
       <details className="mt-1.5">
         <summary className="cursor-pointer text-[10px] font-semibold text-slate-500">Legenda dos agentes</summary>
         <ul className="flex flex-wrap gap-x-2.5 gap-y-1 mt-1">
