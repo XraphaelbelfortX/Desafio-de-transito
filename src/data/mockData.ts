@@ -1,23 +1,23 @@
 import { Incident, Intervention } from '../types';
 
 /**
- * Coordenadas exatas do centro do círculo vermelho:
- * Cruzamento das duas pistas da Av. dos Africanos com a Av. Vicente Venâncio de Queiroga / Rua Minerva e retorno central
+ * Coordenadas exatas do cruzamento das duas pistas da Av. dos Africanos
+ * com a Av. Vicente Venâncio de Queiroga / Rua Minerva e retorno central
  */
 export const INTERSECTION_CENTER = {
   lat: -2.55498,
   lng: -44.27049,
-  zoom: 17.8,
+  zoom: 18.0,
   label: 'Av. dos Africanos × Av. Vicente Venâncio de Queiroga (São Luís - MA)',
 };
 
 /**
- * 5 incidentes iniciais posicionados exatamente dentro do perímetro do círculo vermelho
- * (Pista Sul, Canteiro Central, Pista Norte e Retorno Diagonal da Av. dos Africanos × Vicente Venâncio de Queiroga)
+ * Alertas (quase-acidentes) posicionados exclusivamente no cruzamento da
+ * Av. dos Africanos com a Av. Vicente Venâncio de Queiroga / Rua Minerva
  */
 export const INITIAL_INCIDENTS: Incident[] = [
   {
-    id: 'inc-001',
+    id: 'inc-v2-001',
     lat: -2.55498,
     lng: -44.27049,
     tipo: 'Quase-Atropelamento de Ciclista no Cruzamento Central',
@@ -29,7 +29,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
     pesoHeatmap: 1.0,
   },
   {
-    id: 'inc-002',
+    id: 'inc-v2-002',
     lat: -2.55508,
     lng: -44.27058,
     tipo: 'Conflito Veículo × Pedestre (Pista Sul)',
@@ -41,7 +41,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
     pesoHeatmap: 1.0,
   },
   {
-    id: 'inc-003',
+    id: 'inc-v2-003',
     lat: -2.55488,
     lng: -44.27039,
     tipo: 'Frenagem Brusca na Pista Norte (Acesso Rua Minerva)',
@@ -53,7 +53,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
     pesoHeatmap: 1.0,
   },
   {
-    id: 'inc-004',
+    id: 'inc-v2-004',
     lat: -2.55489,
     lng: -44.27065,
     tipo: 'Conflito Crítico na Agulha de Retorno',
@@ -65,7 +65,7 @@ export const INITIAL_INCIDENTS: Incident[] = [
     pesoHeatmap: 0.95,
   },
   {
-    id: 'inc-005',
+    id: 'inc-v2-005',
     lat: -2.55507,
     lng: -44.27035,
     tipo: 'Excesso de Velocidade e Invasão do Canteiro/Ciclovia',
@@ -75,6 +75,18 @@ export const INITIAL_INCIDENTS: Incident[] = [
     horario: 'Ontem, 19:05',
     origem: 'WhatsApp Cidadão',
     pesoHeatmap: 1.0,
+  },
+  {
+    id: 'inc-v2-006',
+    lat: -2.55501,
+    lng: -44.27060,
+    tipo: 'Fechada em Conversão à Esquerda',
+    severidade: 'alta',
+    resumo:
+      'Van escolar precisou frear bruscamente para evitar colisão lateral com carro saindo da Vicente Venâncio de Queiroga.',
+    horario: 'Ontem, 17:40',
+    origem: 'WhatsApp Cidadão',
+    pesoHeatmap: 0.95,
   },
 ];
 

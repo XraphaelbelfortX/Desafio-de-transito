@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ShieldAlert,
   Bike,
@@ -51,8 +51,17 @@ export function App() {
   // 1. Estados Globais Obrigatórios (React Hooks)
   const [incidents, setIncidents] = useState<Incident[]>(INITIAL_INCIDENTS);
   const [activeInterventions, setActiveInterventions] = useState<string[]>([
+    'tachao',
     'ciclofaixa',
   ]);
+
+  // Limpa automaticamente qualquer estado antigo em cache do HMR fora do cruzamento atual
+  useEffect(() => {
+    setIncidents((prev) => {
+      const hasLegacyCoords = prev.some((inc) => inc.lng < -44.2709 || inc.lat > -2.550);
+      return hasLegacyCoords ? INITIAL_INCIDENTS : prev;
+    });
+  }, []);
 
   // Estados de UX / Modais / Processamento IA
   const [isProcessingAI, setIsProcessingAI] = useState<boolean>(false);
