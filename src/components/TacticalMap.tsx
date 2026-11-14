@@ -1,12 +1,12 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import Map, {
   Source,
   Layer,
   Marker,
   Popup,
-  NavigationControl,
   LayerProps,
   MapLayerMouseEvent,
+  MapRef,
 } from 'react-map-gl';
 import maplibregl from 'maplibre-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -27,6 +27,21 @@ import {
 import { Incident } from '../types';
 import { INTERSECTION_CENTER } from '../data/mockData';
 import { RedeLayer, REDE_LAYER_IDS, ROTULO_TIPO } from './RedeLayer';
+import { CameraControls3D, VistaPronta } from './CameraControls3D';
+import { Predios3DLayer } from './Predios3DLayer';
+
+/** Rumo aproximado da Av. dos Africanos (graus, sentido horário a partir do norte). */
+const RUMO_AFRICANOS = 122;
+
+/** Vistas prontas, no estilo do Google Earth, em volta do cruzamento. */
+const VISTAS: VistaPronta[] = [
+  { id: 'sul', nome: 'Da Vicente Venâncio (olhando para o norte)', bearing: RUMO_AFRICANOS - 90, pitch: 62, zoom: 18.3 },
+  { id: 'norte', nome: 'Da Rua Minerva (olhando para o sul)', bearing: RUMO_AFRICANOS + 90, pitch: 62, zoom: 18.3 },
+  { id: 'oeste', nome: 'Pela Africanos, sentido leste', bearing: RUMO_AFRICANOS, pitch: 72, zoom: 18.6 },
+  { id: 'leste', nome: 'Pela Africanos, sentido oeste', bearing: RUMO_AFRICANOS + 180, pitch: 72, zoom: 18.6 },
+  { id: 'alto', nome: 'Vista aérea oblíqua', bearing: -28, pitch: 50, zoom: 17.4 },
+  { id: 'topo', nome: 'De cima (2D)', bearing: 0, pitch: 0, zoom: 17.8 },
+];
 
 /** Fundo de satélite (Esri World Imagery), sem necessidade de token. */
 const SATELITE_STYLE = {
@@ -38,11 +53,22 @@ const SATELITE_STYLE = {
         'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       ],
       tileSize: 256,
-      maxzoom: 19,
+      maxzoom: 18, // a Esri não tem foto em z19 aqui; acima disso o MapLibre amplia o z18
       attribution: 'Imagens © Esri, Maxar, Earthstar Geographics',
     },
   },
   layers: [{ id: 'satelite', type: 'raster' as const, source: 'esri' }],
+  // Luz vinda do noroeste para dar volume às fachadas dos prédios 3D
+  light: { anchor: 'viewport' as const, color: '#ffffff', intensity: 0.45, position: [1.3, 300, 40] as [number, number, number] },
+  // Céu e névoa no horizonte quando a câmera está bem inclinada
+  sky: {
+    'sky-color': '#7fb2e5',
+    'horizon-color': '#dfe9f3',
+    'fog-color': '#dfe9f3',
+    'sky-horizon-blend': 0.6,
+    'horizon-fog-blend': 0.6,
+    'fog-ground-blend': 0.85,
+  },
 };
 
 interface FeicaoRede {
@@ -115,7 +141,6 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const [showRede, setShowRede] = useState(true);
   const [feicaoRede, setFeicaoRede] = useState<FeicaoRede | null>(null);
 
-  /** Clique numa feição da rede de faixas: abre o popup com os dados dela. */
   const handleRedeClick = (evt: MapLayerMouseEvent) => {
     const f = evt.features?.[0];
     if (!f) {
@@ -127,6 +152,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
   // Estados da Visão 3D Interativa (SimCity) e Construtor de Tartarugas 3D
   const [is3DMode, setIs3DMode] = useState<boolean>(true);
+  const [predios3D, setPredios3D] = useState<boolean>(true);
+  const mapRef = useRef<MapRef>(null);
   const [placementTool, setPlacementTool] = useState<'none' | 'tachao' | 'balizador'>('none');
   const [custom3DElements, setCustom3DElements] = useState<Custom3DElement[]>([]);
 
@@ -157,14 +184,25 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const handleToggle3DMode = () => {
     setIs3DMode((prev) => {
       const next = !prev;
-      setViewState((vs) => ({
-        ...vs,
+      const alvo = {
         latitude: INTERSECTION_CENTER.lat,
         longitude: INTERSECTION_CENTER.lng,
         zoom: next ? 18.4 : 17.8,
         pitch: next ? 62 : 0,
         bearing: next ? -28 : 0,
-      }));
+      };
+      // Transição animada, como no Google Earth; sem o mapa pronto, salta direto
+      if (mapRef.current) {
+        mapRef.current.easeTo({
+          center: [alvo.longitude, alvo.latitude],
+          zoom: alvo.zoom,
+          pitch: alvo.pitch,
+          bearing: alvo.bearing,
+          duration: 1200,
+        });
+      } else {
+        setViewState((vs) => ({ ...vs, ...alvo }));
+      }
       if (!next) setPlacementTool('none');
       return next;
     });
@@ -172,7 +210,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
   // Clique no mapa para adicionar Tartarugas 3D ou Balizadores 3D manualmente na pista
   const handleMapClick = (e: MapLayerMouseEvent) => {
-    // Sem ferramenta de colocação ativa, o clique serve para inspecionar a rede de faixas
+    // Sem ferramenta de posicionamento ativa, o clique inspeciona a rede de faixas
     if (placementTool === 'none') {
       handleRedeClick(e);
       return;
@@ -436,6 +474,16 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   );
 
   const handleRecenter = () => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [INTERSECTION_CENTER.lng, INTERSECTION_CENTER.lat],
+        zoom: is3DMode ? 18.4 : INTERSECTION_CENTER.zoom,
+        pitch: is3DMode ? 62 : 0,
+        bearing: is3DMode ? -28 : 0,
+        duration: 1400,
+      });
+      return;
+    }
     setViewState({
       latitude: INTERSECTION_CENTER.lat,
       longitude: INTERSECTION_CENTER.lng,
@@ -452,10 +500,11 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       }`}
     >
       <Map
+        ref={mapRef}
         {...viewState}
         onMove={(evt) => setViewState(evt.viewState)}
         onClick={handleMapClick}
-        maxPitch={80}
+        maxPitch={85}
         mapLib={(isPlaceholderToken ? maplibregl : undefined) as never}
         mapboxAccessToken={isPlaceholderToken ? undefined : customToken}
         mapStyle={
@@ -468,7 +517,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         style={{ width: '100%', height: '100%' }}
         attributionControl={true}
       >
-        <NavigationControl position="bottom-right" showCompass={true} visualizePitch={true} />
+        {/* Prédios 3D do OpenStreetMap (só na visão 3D) */}
+        <Predios3DLayer visible={is3DMode && predios3D} />
 
         {/* Camada Nativa Única de Heatmap de Quase-Acidentes centrada nos alertas */}
         <Source id="incidents-source" type="geojson" data={incidentsGeoJson}>
@@ -804,6 +854,19 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           </div>
         )}
       </div>
+
+      {/* Controles de câmera no estilo Google Earth */}
+      <CameraControls3D
+        mapRef={mapRef}
+        centro={{ lat: INTERSECTION_CENTER.lat, lng: INTERSECTION_CENTER.lng }}
+        bearing={viewState.bearing}
+        pitch={viewState.pitch}
+        is3D={is3DMode}
+        onToggle3D={handleToggle3DMode}
+        predios3D={predios3D}
+        onTogglePredios={() => setPredios3D((v) => !v)}
+        vistas={VISTAS}
+      />
 
       {/* Botões Flutuantes Superiores Direitos: Visão 3D + Simular Street View */}
       <div className="absolute top-3 right-3 z-10 flex flex-col items-end gap-2">
