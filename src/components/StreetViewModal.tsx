@@ -53,7 +53,7 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-blue-300 uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Simulação Digital Twin • Projeção Viária NACTO/SINAPI</span>
+              <span>Ilustração antes e depois, fora de escala</span>
             </div>
             <h3 id="street-view-title" className="text-lg font-bold mt-0.5 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-red-400" />
@@ -336,18 +336,17 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
 
           <div className="absolute bottom-3 left-3 right-3 bg-slate-950/85 backdrop-blur-md text-white p-3 rounded-xl border border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-bold text-blue-300 uppercase tracking-wide">
-                Diagnóstico Guardião AI • Cruzamento Av. dos Africanos × Vicente Venâncio
+              <p className="text-xs font-bold text-blue-300">
+                Desenho para conversar com a comunidade
               </p>
               <p className="text-xs text-slate-200 mt-0.5">
-                A pintura vermelha de contraste combinada aos tachões reduz em até{' '}
-                <strong className="text-emerald-400">78% as invasões de faixa</strong> por veículos em conversão à direita.
+                Esta tela não altera a simulação. O efeito medido de cada intervenção está no mapa e na comparação de cenários.
               </p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
               <Layers className="w-4 h-4 text-blue-400" />
               <span className="text-xs font-semibold text-slate-300">
-                Clique abaixo para testar camadas:
+                Ligue e desligue os elementos abaixo:
               </span>
             </div>
           </div>

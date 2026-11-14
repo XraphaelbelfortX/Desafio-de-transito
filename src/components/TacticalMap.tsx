@@ -11,24 +11,16 @@ import Map, {
 import maplibregl from 'maplibre-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import {
-  Eye,
-  AlertTriangle,
-  MapPin,
-  Layers,
-  Crosshair,
-  Sparkles,
-  CheckCircle2,
-  KeyRound,
-  Box,
-  PlusCircle,
-  RotateCcw,
-} from 'lucide-react';
+import { Eye, AlertTriangle, MapPin, Layers, Crosshair, Sparkles, KeyRound, Box } from 'lucide-react';
 import { Incident } from '../types';
 import { INTERSECTION_CENTER } from '../data/mockData';
 import { RedeLayer, REDE_LAYER_IDS, ROTULO_TIPO } from './RedeLayer';
 import { CameraControls3D, VistaPronta } from './CameraControls3D';
 import { Predios3DLayer } from './Predios3DLayer';
+import type { Simulacao } from '../sim/useSimulacao';
+import type { TipoIntervencao } from '../sim/intervencoes';
+import { CamadaIntervencoes } from './sim/CamadaIntervencoes';
+import { MIME_INTERVENCAO } from './sim/PainelIntervencoes';
 
 /** Rumo aproximado da Av. dos Africanos (graus, sentido horário a partir do norte). */
 const RUMO_AFRICANOS = 122;
@@ -86,54 +78,16 @@ export const MAPBOX_TOKEN = 'YOUR_MAPBOX_TOKEN';
 
 interface TacticalMapProps {
   incidents: Incident[];
-  activeInterventions: string[];
-  riskReduction: number;
   onOpenStreetView: () => void;
   latestIncidentId: string | null;
+  sim: Simulacao;
 }
-
-interface Custom3DElement {
-  id: string;
-  lng: number;
-  lat: number;
-  kind: 'tachao' | 'balizador';
-}
-
-// Helper para criar um pequeno polígono 3D (caixa/cilindro extrudado em metros) ao redor de [lng, lat]
-const createBoxPolygon = (
-  lng: number,
-  lat: number,
-  halfWidthDeg: number,
-  halfHeightDeg: number,
-  heightMeters: number,
-  color: string
-) => ({
-  type: 'Feature' as const,
-  properties: {
-    height: heightMeters,
-    base: 0,
-    color,
-  },
-  geometry: {
-    type: 'Polygon' as const,
-    coordinates: [
-      [
-        [lng - halfWidthDeg, lat - halfHeightDeg],
-        [lng + halfWidthDeg, lat - halfHeightDeg],
-        [lng + halfWidthDeg, lat + halfHeightDeg],
-        [lng - halfWidthDeg, lat + halfHeightDeg],
-        [lng - halfWidthDeg, lat - halfHeightDeg],
-      ],
-    ],
-  },
-});
 
 export const TacticalMap: React.FC<TacticalMapProps> = ({
   incidents,
-  activeInterventions,
-  riskReduction,
   onOpenStreetView,
   latestIncidentId,
+  sim,
 }) => {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [customToken, setCustomToken] = useState<string>(MAPBOX_TOKEN);
@@ -141,21 +95,20 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const [showRede, setShowRede] = useState(true);
   const [feicaoRede, setFeicaoRede] = useState<FeicaoRede | null>(null);
 
-  const handleRedeClick = (evt: MapLayerMouseEvent) => {
-    const f = evt.features?.[0];
-    if (!f) {
-      setFeicaoRede(null);
-      return;
-    }
-    setFeicaoRede({ lng: evt.lngLat.lng, lat: evt.lngLat.lat, props: f.properties ?? {} });
-  };
-
-  // Estados da Visão 3D Interativa (SimCity) e Construtor de Tartarugas 3D
+  // Estados da Visão 3D Interativa
   const [is3DMode, setIs3DMode] = useState<boolean>(true);
   const [predios3D, setPredios3D] = useState<boolean>(true);
   const mapRef = useRef<MapRef>(null);
-  const [placementTool, setPlacementTool] = useState<'none' | 'tachao' | 'balizador'>('none');
-  const [custom3DElements, setCustom3DElements] = useState<Custom3DElement[]>([]);
+  const [soltando, setSoltando] = useState(false);
+
+  // Esc cancela o modo de colocar intervenção
+  const { modoColocar, setModoColocar } = sim;
+  useEffect(() => {
+    if (!modoColocar) return;
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setModoColocar(null);
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [modoColocar, setModoColocar]);
 
   const [viewState, setViewState] = useState({
     latitude: INTERSECTION_CENTER.lat,
@@ -203,41 +156,30 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       } else {
         setViewState((vs) => ({ ...vs, ...alvo }));
       }
-      if (!next) setPlacementTool('none');
       return next;
     });
   };
 
-  // Clique no mapa para adicionar Tartarugas 3D ou Balizadores 3D manualmente na pista
+  // Clique no mapa: coloca a intervenção escolhida ou inspeciona a rede de faixas
   const handleMapClick = (e: MapLayerMouseEvent) => {
-    // Sem ferramenta de posicionamento ativa, o clique inspeciona a rede de faixas
-    if (placementTool === 'none') {
-      handleRedeClick(e);
+    if (sim.modoColocar) {
+      sim.adicionar(sim.modoColocar, e.lngLat.lng, e.lngLat.lat);
       return;
     }
-    const { lng, lat } = e.lngLat;
+    sim.selecionarIntervencao(null);
+    const feicao = e.features?.[0];
+    setFeicaoRede(feicao ? { lng: e.lngLat.lng, lat: e.lngLat.lat, props: feicao.properties ?? {} } : null);
+  };
 
-    if (placementTool === 'tachao') {
-      // Cria uma fileira tática de 3 tartarugas 3D no ponto clicado
-      const offsets = [-0.000018, 0, 0.000018];
-      const newStuds: Custom3DElement[] = offsets.map((off, idx) => ({
-        id: `custom-tachao-${Date.now()}-${idx}`,
-        lng: lng + off,
-        lat: lat + off * 0.7,
-        kind: 'tachao',
-      }));
-      setCustom3DElements((prev) => [...prev, ...newStuds]);
-    } else if (placementTool === 'balizador') {
-      setCustom3DElements((prev) => [
-        ...prev,
-        {
-          id: `custom-balizador-${Date.now()}`,
-          lng,
-          lat,
-          kind: 'balizador',
-        },
-      ]);
-    }
+  // Soltar uma intervenção arrastada do painel
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    const tipo = e.dataTransfer.getData(MIME_INTERVENCAO) as TipoIntervencao;
+    setSoltando(false);
+    if (!tipo || !mapRef.current) return;
+    e.preventDefault();
+    const r = e.currentTarget.getBoundingClientRect();
+    const p = mapRef.current.unproject([e.clientX - r.left, e.clientY - r.top]);
+    sim.adicionar(tipo, p.lng, p.lat);
   };
 
   // GeoJSON Único do Heatmap construído exclusivamente a partir dos alertas (`incidents`) no cruzamento atual
@@ -270,8 +212,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   );
 
   // Camada nativa de Heatmap (única mancha de calor centrada exatamente nos alertas)
+  // (os relatos são fatos passados: a mancha não muda quando se coloca uma intervenção)
   const heatmapLayer: LayerProps = useMemo(() => {
-    const mitigationFactor = Math.max(0.28, 1 - riskReduction / 115);
     return {
       id: 'incidents-heatmap',
       type: 'heatmap',
@@ -282,11 +224,11 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           ['linear'],
           ['zoom'],
           14,
-          1.8 * mitigationFactor,
+          1.8,
           18,
-          3.6 * mitigationFactor,
+          3.6,
           20,
-          4.5 * mitigationFactor,
+          4.5,
         ],
         'heatmap-color': [
           'interpolate',
@@ -319,159 +261,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         'heatmap-opacity': is3DMode ? 0.78 : 0.88,
       },
     };
-  }, [riskReduction, is3DMode]);
-
-  // Coordenadas das Tartarugas (Tachões Refletivos) nas duas pistas e no retorno dentro do círculo vermelho
-  const tachoesCoords: [number, number][] = useMemo(
-    () => [
-      // Linha de contenção na agulha do retorno
-      [-44.27067, -2.55485],
-      [-44.27065, -2.55490],
-      [-44.27062, -2.55495],
-      [-44.27060, -2.55500],
-      // Linha de aproximação Pista Sul (Vicente Venâncio)
-      [-44.27061, -2.55505],
-      [-44.27057, -2.55508],
-      [-44.27053, -2.55511],
-      // Linha de segregação na travessia central
-      [-44.27052, -2.55501],
-      [-44.27049, -2.55498],
-      [-44.27046, -2.55495],
-      // Linha de aproximação Pista Norte (Rua Minerva)
-      [-44.27043, -2.55491],
-      [-44.27039, -2.55488],
-      [-44.27035, -2.55485],
-    ],
-    []
-  );
-
-  // Polígonos 3D Extrudados (fill-extrusion) para as Tartarugas + Balizadores + Elementos adicionados pelo usuário
-  const tactical3DObjectsGeoJson = useMemo(() => {
-    const features = [];
-
-    // 1. Tartarugas do Catálogo (quando o toggle 'tachao' está ativo)
-    if (activeInterventions.includes('tachao')) {
-      for (const [lng, lat] of tachoesCoords) {
-        // Base preta/cinza do tachão 3D + topo amarelo refletivo extrudado
-        features.push(createBoxPolygon(lng, lat, 0.000009, 0.000009, 0.55, '#facc15'));
-      }
-    }
-
-    // 2. Balizadores 3D sobre os Avanços de Calçada (quando o toggle 'neckdown' está ativo)
-    if (activeInterventions.includes('neckdown')) {
-      const bollardCoords: [number, number][] = [
-        [-44.27063, -2.55506],
-        [-44.27057, -2.55506],
-        [-44.27057, -2.55511],
-        [-44.27042, -2.55485],
-        [-44.27036, -2.55485],
-        [-44.27036, -2.55490],
-      ];
-      for (const [lng, lat] of bollardCoords) {
-        features.push(createBoxPolygon(lng, lat, 0.000006, 0.000006, 1.8, '#f59e0b'));
-      }
-    }
-
-    // 3. Tartarugas e Balizadores 3D adicionados interativamente com clique no mapa
-    for (const item of custom3DElements) {
-      if (item.kind === 'tachao') {
-        features.push(
-          createBoxPolygon(item.lng, item.lat, 0.000009, 0.000009, 0.6, '#fde047')
-        );
-      } else {
-        features.push(
-          createBoxPolygon(item.lng, item.lat, 0.000007, 0.000007, 1.9, '#ef4444')
-        );
-      }
-    }
-
-    return {
-      type: 'FeatureCollection' as const,
-      features,
-    };
-  }, [activeInterventions, tachoesCoords, custom3DElements]);
-
-  // Geometria da Ciclofaixa Vermelha (Suporta 2D e Extrusão 3D)
-  const ciclofaixaGeoJson = useMemo(
-    () => ({
-      type: 'FeatureCollection' as const,
-      features: [
-        {
-          type: 'Feature' as const,
-          properties: { name: 'Ciclofaixa Central - Av. dos Africanos' },
-          geometry: {
-            type: 'LineString' as const,
-            coordinates: [
-              [-44.27076, -2.55481],
-              [-44.27049, -2.55498],
-              [-44.27024, -2.55514],
-            ],
-          },
-        },
-        {
-          type: 'Feature' as const,
-          properties: { name: 'Travessia Cicloviária - Vicente Venâncio × Rua Minerva' },
-          geometry: {
-            type: 'LineString' as const,
-            coordinates: [
-              [-44.27064, -2.55514],
-              [-44.27049, -2.55498],
-              [-44.27034, -2.55482],
-            ],
-          },
-        },
-      ],
-    }),
-    []
-  );
-
-  // Avanços de Calçada (Neckdowns) com suporte a volume 3D (`fill-extrusion`)
-  const neckdownGeoJson = useMemo(
-    () => ({
-      type: 'FeatureCollection' as const,
-      features: [
-        {
-          type: 'Feature' as const,
-          properties: {
-            name: 'Avanço de Calçada 3D - Esquina Pista Sul (Vicente Venâncio)',
-            height: 0.9,
-          },
-          geometry: {
-            type: 'Polygon' as const,
-            coordinates: [
-              [
-                [-44.27065, -2.55505],
-                [-44.27055, -2.55505],
-                [-44.27055, -2.55513],
-                [-44.27065, -2.55513],
-                [-44.27065, -2.55505],
-              ],
-            ],
-          },
-        },
-        {
-          type: 'Feature' as const,
-          properties: {
-            name: 'Avanço de Calçada 3D - Esquina Pista Norte (Rua Minerva)',
-            height: 0.9,
-          },
-          geometry: {
-            type: 'Polygon' as const,
-            coordinates: [
-              [
-                [-44.27044, -2.55484],
-                [-44.27034, -2.55484],
-                [-44.27034, -2.55492],
-                [-44.27044, -2.55492],
-                [-44.27044, -2.55484],
-              ],
-            ],
-          },
-        },
-      ],
-    }),
-    []
-  );
+  }, [is3DMode]);
 
   const handleRecenter = () => {
     if (mapRef.current) {
@@ -495,9 +285,17 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
   return (
     <div
-      className={`relative w-full h-full min-h-[450px] rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-900 ${
-        placementTool !== 'none' ? 'cursor-crosshair' : ''
+      className={`relative w-full h-full min-h-[450px] rounded-xl overflow-hidden border shadow-sm bg-slate-900 ${
+        soltando ? 'border-cyan-400 ring-2 ring-cyan-400/60' : 'border-slate-200'
       }`}
+      onDragOver={(e) => {
+        if (!e.dataTransfer.types.includes(MIME_INTERVENCAO)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        setSoltando(true);
+      }}
+      onDragLeave={() => setSoltando(false)}
+      onDrop={handleDrop}
     >
       <Map
         ref={mapRef}
@@ -513,7 +311,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             : 'mapbox://styles/mapbox/satellite-streets-v12'
         }
         interactiveLayerIds={showRede ? [...REDE_LAYER_IDS] : []}
-        cursor={feicaoRede ? 'pointer' : undefined}
+        cursor={sim.modoColocar ? 'crosshair' : feicaoRede ? 'pointer' : undefined}
         style={{ width: '100%', height: '100%' }}
         attributionControl={true}
       >
@@ -562,105 +360,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           </Popup>
         )}
 
-        {/* Avanço de Calçada (Neckdown) em 2D e Extrusão 3D Volumétrica */}
-        {activeInterventions.includes('neckdown') && (
-          <Source id="neckdown-source" type="geojson" data={neckdownGeoJson}>
-            <Layer
-              id="neckdown-extrusion-3d"
-              type="fill-extrusion"
-              paint={{
-                'fill-extrusion-color': '#10b981',
-                'fill-extrusion-height': is3DMode ? ['get', 'height'] : 0.1,
-                'fill-extrusion-base': 0,
-                'fill-extrusion-opacity': 0.85,
-              }}
-            />
-            <Layer
-              id="neckdown-outline"
-              type="line"
-              paint={{
-                'line-color': '#047857',
-                'line-width': 2.5,
-              }}
-            />
-          </Source>
-        )}
-
-        {/* Ciclofaixa Vermelha no Cruzamento */}
-        {activeInterventions.includes('ciclofaixa') && (
-          <Source id="ciclofaixa-source" type="geojson" data={ciclofaixaGeoJson}>
-            <Layer
-              id="ciclofaixa-border"
-              type="line"
-              paint={{
-                'line-color': '#ffffff',
-                'line-width': 14,
-                'line-opacity': 0.92,
-              }}
-            />
-            <Layer
-              id="ciclofaixa-line"
-              type="line"
-              paint={{
-                'line-color': '#dc2626',
-                'line-width': 10,
-                'line-opacity': 0.96,
-              }}
-            />
-          </Source>
-        )}
-
-        {/* Camada Volumétrica 3D (fill-extrusion) para Tartarugas (Tachões) e Balizadores */}
-        <Source id="tactical-3d-objects" type="geojson" data={tactical3DObjectsGeoJson}>
-          <Layer
-            id="tactical-3d-extrusion"
-            type="fill-extrusion"
-            paint={{
-              'fill-extrusion-color': ['get', 'color'],
-              'fill-extrusion-height': ['get', 'height'],
-              'fill-extrusion-base': ['get', 'base'],
-              'fill-extrusion-opacity': 0.95,
-            }}
-          />
-        </Source>
-
-        {/* Marcadores Luminosos das Tartarugas (Catálogo + Adicionadas no Mapa 3D) */}
-        {activeInterventions.includes('tachao') &&
-          tachoesCoords.map((coord, idx) => (
-            <Marker
-              key={`tachao-${idx}`}
-              longitude={coord[0]}
-              latitude={coord[1]}
-              anchor="center"
-            >
-              <div
-                title="Tartaruga / Tachão Refletivo 3D (SINAPI)"
-                className="w-3.5 h-3.5 rounded-sm bg-amber-400 border-2 border-slate-900 shadow-[0_0_12px_rgba(251,191,36,1)] transform rotate-45"
-              />
-            </Marker>
-          ))}
-
-        {custom3DElements.map((item) => (
-          <Marker
-            key={item.id}
-            longitude={item.lng}
-            latitude={item.lat}
-            anchor="center"
-          >
-            <div
-              title={
-                item.kind === 'tachao'
-                  ? 'Tartaruga 3D adicionada pelo gestor'
-                  : 'Balizador 3D adicionado pelo gestor'
-              }
-              className={
-                item.kind === 'tachao'
-                  ? 'w-3.5 h-3.5 rounded-sm bg-yellow-300 border-2 border-slate-950 shadow-[0_0_14px_rgba(253,224,71,1)] transform rotate-45'
-                  : 'w-4 h-4 rounded-full bg-red-500 border-2 border-white shadow-lg'
-              }
-            />
-          </Marker>
-        ))}
+        {/* Intervenções colocadas pelo painel (desenho no chão + ícones arrastáveis) */}
+        <CamadaIntervencoes sim={sim} />
 
         {/* Marcadores Interativos de Alertas (Quase-Acidentes) exatamente sobre a mancha de calor */}
         {incidents.map((incident) => {
@@ -743,7 +444,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
                 {selectedIncident.resumo}
               </p>
               <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
-                <span>Origem: {selectedIncident.origem || 'WhatsApp IA'}</span>
+                <span>Origem: {selectedIncident.origem || 'WhatsApp'}</span>
                 <span className="font-mono">
                   {selectedIncident.lat.toFixed(5)}, {selectedIncident.lng.toFixed(5)}
                 </span>
@@ -753,7 +454,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         )}
       </Map>
 
-      {/* HUD Superior Esquerdo: Identificação + Ferramenta Construtor 3D de Tartarugas */}
+      {/* HUD Superior Esquerdo: identificação do cruzamento */}
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-2 max-w-md pointer-events-none">
         <div className="bg-slate-900/90 backdrop-blur-md text-white px-3.5 py-2.5 rounded-xl border border-slate-700/80 shadow-lg pointer-events-auto">
           <div className="flex items-center gap-2">
@@ -762,7 +463,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
             </span>
             <span className="text-[11px] font-bold uppercase tracking-wider text-blue-300">
-              {is3DMode ? 'Visão 3D Tática (Pitch 60°) • SimCity' : 'Visão 2D Plana • São Luís/MA'}
+              {is3DMode ? 'Visão 3D' : 'Visão 2D'} • São Luís/MA
             </span>
           </div>
           <h2 className="text-xs sm:text-sm font-bold text-white mt-0.5 flex items-center gap-1.5">
@@ -771,86 +472,13 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           </h2>
           <p className="text-[11px] text-slate-300 mt-0.5 font-mono">
             Lat: {INTERSECTION_CENTER.lat}, Lng: {INTERSECTION_CENTER.lng} •{' '}
-            <strong className="text-amber-300">{incidents.length} alertas no cruzamento</strong>
+            <strong className="text-amber-300">{incidents.length} relatos no cruzamento</strong>
           </p>
         </div>
 
-        {/* Barra de Simulação Interativa 3D: Adicionar Tartarugas / Balizadores clicando na pista */}
-        <div className="bg-slate-900/95 backdrop-blur-md text-white p-2.5 rounded-xl border border-blue-500/40 shadow-lg pointer-events-auto space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-amber-300 flex items-center gap-1.5">
-              <Box className="w-3.5 h-3.5" />
-              Simulador 3D na Via (Clique para Inserir):
-            </span>
-            {custom3DElements.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setCustom3DElements([])}
-                className="text-[10px] text-slate-300 hover:text-white flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded border border-slate-700"
-              >
-                <RotateCcw className="w-2.5 h-2.5" /> Limpar ({custom3DElements.length})
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                if (!is3DMode) handleToggle3DMode();
-                setPlacementTool((prev) => (prev === 'tachao' ? 'none' : 'tachao'));
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition border ${
-                placementTool === 'tachao'
-                  ? 'bg-amber-400 text-slate-950 border-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.6)]'
-                  : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
-              }`}
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>+ Tartarugas 3D</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (!is3DMode) handleToggle3DMode();
-                setPlacementTool((prev) =>
-                  prev === 'balizador' ? 'none' : 'balizador'
-                );
-              }}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition border ${
-                placementTool === 'balizador'
-                  ? 'bg-red-600 text-white border-red-300 shadow-[0_0_12px_rgba(239,68,68,0.6)]'
-                  : 'bg-slate-800 hover:bg-slate-700 text-red-300 border-slate-700'
-              }`}
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>+ Balizador 3D</span>
-            </button>
-          </div>
-
-          {placementTool !== 'none' && (
-            <p className="text-[10px] text-emerald-300 font-medium">
-              Modo ativo: clique em qualquer ponto do cruzamento no mapa para implantar{' '}
-              {placementTool === 'tachao'
-                ? 'uma fileira de tartarugas refletivas 3D'
-                : 'um balizador cilíndrico 3D'}
-              !
-            </p>
-          )}
-        </div>
-
-        {/* Indicador de Obras Táticas Ativas no Mapa */}
-        {activeInterventions.length > 0 && (
-          <div className="bg-emerald-950/90 backdrop-blur-md text-emerald-100 px-3 py-2 rounded-lg border border-emerald-700/70 shadow-md flex items-center gap-2 text-xs pointer-events-auto">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>
-              <strong>Modo SimCity Ativo:</strong> {activeInterventions.length}{' '}
-              {activeInterventions.length === 1
-                ? 'intervenção 3D projetada'
-                : 'intervenções 3D projetadas'}{' '}
-              no cruzamento (-{riskReduction}% risco)
-            </span>
+        {sim.modoColocar && (
+          <div className="bg-blue-950/90 text-blue-50 text-xs px-3 py-2 rounded-lg border border-blue-500/50 shadow pointer-events-auto">
+            Clique no lugar da intervenção. Esc cancela.
           </div>
         )}
       </div>
@@ -962,13 +590,14 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       <div className="absolute bottom-3 left-3 z-10 bg-white/95 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-200 shadow-md flex flex-wrap items-center gap-4 text-[11px] text-slate-700">
         <div className="flex items-center gap-1.5 font-semibold text-slate-800">
           <Layers className="w-3.5 h-3.5 text-blue-800" />
-          <span>Mancha de Calor (Quase-Acidentes):</span>
+          <span>Mancha de calor dos relatos:</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-500">Moderado</span>
+          <span className="text-[10px] text-slate-500">Poucos</span>
           <div className="w-24 h-2.5 rounded-full bg-gradient-to-r from-blue-500 via-amber-400 to-red-600" />
-          <span className="text-[10px] font-bold text-red-700">Crítico</span>
+          <span className="text-[10px] font-bold text-red-700">Muitos</span>
         </div>
+        {sim.erro && <span className="text-red-700">Simulador indisponível: {sim.erro}</span>}
       </div>
     </div>
   );
