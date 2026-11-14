@@ -118,8 +118,7 @@ export function useSimulacao(): Simulacao {
   const ouvintes = useRef(new Set<() => void>());
   const pulsos = useRef<PulsoConflito[]>([]);
   const [rodando, setRodando] = useState(true);
-  // sem controles de tempo na tela ainda: roda a 20× para as métricas do painel firmarem rápido
-  const [velocidade, setVelocidade] = useState<Velocidade>(20);
+  const [velocidade, setVelocidade] = useState<Velocidade>(1);
   const [hora, setHora] = useState(7);
   const [metricas, setMetricas] = useState<Metricas | null>(null);
   const [nAgentes, setNAgentes] = useState(0);

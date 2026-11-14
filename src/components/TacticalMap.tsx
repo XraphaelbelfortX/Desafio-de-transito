@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import Map, {
   Source,
   Layer,
@@ -20,6 +20,10 @@ import { Predios3DLayer } from './Predios3DLayer';
 import type { Simulacao } from '../sim/useSimulacao';
 import type { TipoIntervencao } from '../sim/intervencoes';
 import { CamadaIntervencoes } from './sim/CamadaIntervencoes';
+import { CAMADAS_AGENTES, CamadaSimulacao } from './sim/CamadaSimulacao';
+import { ControlesTempo } from './sim/ControlesTempo';
+import { PainelAgente } from './sim/PainelAgente';
+import { SeletorMancha, type Mancha } from './sim/SeletorMancha';
 import { MIME_INTERVENCAO } from './sim/PainelIntervencoes';
 
 /** Rumo aproximado da Av. dos Africanos (graus, sentido horário a partir do norte). */
@@ -100,6 +104,11 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const [predios3D, setPredios3D] = useState<boolean>(true);
   const mapRef = useRef<MapRef>(null);
   const [soltando, setSoltando] = useState(false);
+  const [mancha, setMancha] = useState<Mancha>('conflitos');
+  const [camadasAgentes, setCamadasAgentes] = useState(false);
+  const aoCamadas = useCallback((prontas: boolean) => {
+    setCamadasAgentes((atual) => (atual === prontas ? atual : prontas));
+  }, []);
 
   // Esc cancela o modo de colocar intervenção
   const { modoColocar, setModoColocar } = sim;
@@ -166,8 +175,17 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       sim.adicionar(sim.modoColocar, e.lngLat.lng, e.lngLat.lat);
       return;
     }
+    const agente = e.features?.find((f) => f.layer?.id === 'sim-veiculos' || f.layer?.id === 'sim-pedestres');
+    if (agente?.properties && agente.properties.id != null) {
+      sim.selecionar(Number(agente.properties.id));
+      sim.selecionarIntervencao(null);
+      setFeicaoRede(null);
+      setSelectedIncident(null);
+      return;
+    }
+    sim.selecionar(null);
     sim.selecionarIntervencao(null);
-    const feicao = e.features?.[0];
+    const feicao = e.features?.find((f) => REDE_LAYER_IDS.includes(f.layer?.id as (typeof REDE_LAYER_IDS)[number]));
     setFeicaoRede(feicao ? { lng: e.lngLat.lng, lat: e.lngLat.lat, props: feicao.properties ?? {} } : null);
   };
 
@@ -310,7 +328,10 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             ? SATELITE_STYLE
             : 'mapbox://styles/mapbox/satellite-streets-v12'
         }
-        interactiveLayerIds={showRede ? [...REDE_LAYER_IDS] : []}
+        interactiveLayerIds={[
+          ...(showRede ? REDE_LAYER_IDS : []),
+          ...(sim.pronto && camadasAgentes ? CAMADAS_AGENTES : []),
+        ]}
         cursor={sim.modoColocar ? 'crosshair' : feicaoRede ? 'pointer' : undefined}
         style={{ width: '100%', height: '100%' }}
         attributionControl={true}
@@ -320,11 +341,14 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
         {/* Camada Nativa Única de Heatmap de Quase-Acidentes centrada nos alertas */}
         <Source id="incidents-source" type="geojson" data={incidentsGeoJson}>
-          <Layer {...heatmapLayer} />
+          <Layer {...heatmapLayer} layout={{ visibility: mancha === 'relatos' ? 'visible' : 'none' }} />
         </Source>
 
         {/* Rede de faixas (gerada por scripts/gera-rede.mjs) */}
         <RedeLayer visible={showRede} />
+
+        {/* Agentes, semáforos e mancha da simulação (GeoJSON direto na fonte, sem estado React) */}
+        <CamadaSimulacao sim={sim} mancha={mancha} onCamadas={aoCamadas} />
 
         {feicaoRede && (
           <Popup
@@ -363,8 +387,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         {/* Intervenções colocadas pelo painel (desenho no chão + ícones arrastáveis) */}
         <CamadaIntervencoes sim={sim} />
 
-        {/* Marcadores Interativos de Alertas (Quase-Acidentes) exatamente sobre a mancha de calor */}
-        {incidents.map((incident) => {
+        {/* Marcadores dos relatos só aparecem com a mancha Relatos */}
+        {mancha === 'relatos' && incidents.map((incident) => {
           const isNew = incident.id === latestIncidentId;
           const badgeColor =
             incident.severidade === 'critica'
@@ -409,7 +433,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         })}
 
         {/* Popup de Detalhes do Relato */}
-        {selectedIncident && (
+        {mancha === 'relatos' && selectedIncident && (
           <Popup
             longitude={selectedIncident.lng}
             latitude={selectedIncident.lat}
@@ -454,8 +478,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         )}
       </Map>
 
-      {/* HUD Superior Esquerdo: identificação do cruzamento */}
-      <div className="absolute top-3 left-3 z-10 flex flex-col gap-2 max-w-md pointer-events-none">
+      {/* HUD Superior Esquerdo: identificação do cruzamento e painel do agente */}
+      <div className="absolute top-3 left-3 bottom-[17.5rem] z-10 flex flex-col gap-2 w-[min(100%-1.5rem,340px)] pointer-events-none">
         <div className="bg-slate-900/90 backdrop-blur-md text-white px-3.5 py-2.5 rounded-xl border border-slate-700/80 shadow-lg pointer-events-auto">
           <div className="flex items-center gap-2">
             <span className="flex h-2.5 w-2.5 relative">
@@ -479,6 +503,12 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         {sim.modoColocar && (
           <div className="bg-blue-950/90 text-blue-50 text-xs px-3 py-2 rounded-lg border border-blue-500/50 shadow pointer-events-auto">
             Clique no lugar da intervenção. Esc cancela.
+          </div>
+        )}
+
+        {sim.agente && (
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <PainelAgente agente={sim.agente} onFechar={() => sim.selecionar(null)} />
           </div>
         )}
       </div>
@@ -586,18 +616,18 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         )}
       </div>
 
-      {/* Legenda do Heatmap na base esquerda do mapa */}
-      <div className="absolute bottom-3 left-3 z-10 bg-white/95 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-200 shadow-md flex flex-wrap items-center gap-4 text-[11px] text-slate-700">
-        <div className="flex items-center gap-1.5 font-semibold text-slate-800">
-          <Layers className="w-3.5 h-3.5 text-blue-800" />
-          <span>Mancha de calor dos relatos:</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-500">Poucos</span>
-          <div className="w-24 h-2.5 rounded-full bg-gradient-to-r from-blue-500 via-amber-400 to-red-600" />
-          <span className="text-[10px] font-bold text-red-700">Muitos</span>
-        </div>
-        {sim.erro && <span className="text-red-700">Simulador indisponível: {sim.erro}</span>}
+      {/* Mancha, legenda e controles de tempo no canto inferior esquerdo */}
+      <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-2 items-start max-w-[min(100%-5.5rem,440px)]">
+        <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} />
+        <ControlesTempo
+          rodando={sim.rodando}
+          onRodando={sim.setRodando}
+          velocidade={sim.velocidade}
+          onVelocidade={sim.setVelocidade}
+          hora={sim.hora}
+          onHora={sim.definirHora}
+          onReiniciar={sim.reiniciar}
+        />
       </div>
     </div>
   );

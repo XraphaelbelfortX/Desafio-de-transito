@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquarePlus, Mic, Send, Loader2, Bot } from 'lucide-react';
+import { MessageSquarePlus, Mic, Send, Loader2, MessageSquare } from 'lucide-react';
 import { CITIZEN_AUDIO_PRESETS } from '../data/mockData';
 
 interface WhatsAppSimulatorProps {
@@ -50,7 +50,7 @@ export const WhatsAppSimulator: React.FC<WhatsAppSimulatorProps> = ({
         </div>
 
         <div className="flex items-center gap-2 text-[11px] bg-slate-950/40 px-2.5 py-1 rounded-lg border border-white/10">
-          <Bot className="w-3.5 h-3.5 text-emerald-300" />
+          <MessageSquare className="w-3.5 h-3.5 text-emerald-300" />
           <span>
             Relatos recebidos:{' '}
             <strong className="text-emerald-300 font-mono">{totalReportsCount}</strong>

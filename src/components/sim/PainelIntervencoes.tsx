@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Minus, Plus, Save, Trash2, Upload } from 'lucide-react';
 import { CATALOGO, DEFINICAO, TEMPOS_PADRAO, type TemposSemaforo, type TipoIntervencao } from '../../sim/intervencoes';
 import { formatarReais, type IdCenario, type Simulacao } from '../../sim/useSimulacao';
 import { orcarCenario, paraLocais, totalConflitos, totalInfracoes } from '../../sim/cenarios';
 import { IconeIntervencao } from './IconeIntervencao';
+import { ComparacaoCenarios } from './ComparacaoCenarios';
 
 export const COR_CENARIO: Record<'atual' | IdCenario, string> = {
   atual: '#2a78d6',
@@ -70,9 +71,15 @@ interface Props {
 }
 
 export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
+  const [comparacaoAberta, setComparacaoAberta] = useState(false);
   const custoPorId = new Map((sim.orcamento?.itens ?? []).map((i) => [i.intervencao.id, i.orcamento]));
   const m = sim.metricas;
   const minutos = m ? m.horas * 60 : 0;
+  const ritmo = !sim.rodando
+    ? 'A simulação está pausada.'
+    : sim.velocidade === 1
+      ? 'A simulação corre na velocidade real.'
+      : `A simulação corre ${sim.velocidade} vezes mais rápido que o real.`;
 
   const iniciarArraste = (e: React.DragEvent, tipo: TipoIntervencao) => {
     e.dataTransfer.setData(MIME_INTERVENCAO, tipo);
@@ -195,8 +202,8 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
         <section aria-label="Resultado na simulação">
           <h3 className="text-sm font-bold text-slate-900">Agora na simulação</h3>
           <p className="text-[11px] text-slate-500 mb-2">
-            A simulação roda em segundo plano, 20 vezes mais rápido que o real. Valores por hora, medidos em {num(minutos)} min simulados
-            desde a última mudança{minutos < 15 ? ' (amostra curta, espere um pouco)' : ''}.
+            {ritmo} Valores por hora, medidos em {num(minutos)} min simulados desde a última mudança
+            {minutos < 15 ? ' (amostra curta, espere um pouco)' : ''}.
           </p>
           <dl className="grid grid-cols-2 gap-2">
             {[
@@ -268,6 +275,19 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
           <p className="text-[11px] text-slate-500 mt-1.5">Guarde o que está no mapa para reabrir depois. O cenário atual é o cruzamento sem nenhuma intervenção.</p>
         </section>
       </div>
+
+      <footer className="border-t border-slate-200 bg-white px-4 py-3 shrink-0">
+        <button
+          type="button"
+          onClick={() => setComparacaoAberta(true)}
+          disabled={!sim.pronto}
+          className="w-full rounded-xl bg-gov-navy text-white text-sm font-bold py-2.5 hover:bg-blue-900 disabled:bg-slate-300 disabled:text-slate-500"
+        >
+          Comparar atual, A e B
+        </button>
+      </footer>
+
+      <ComparacaoCenarios sim={sim} aberto={comparacaoAberta} onFechar={() => setComparacaoAberta(false)} />
     </div>
   );
 };
