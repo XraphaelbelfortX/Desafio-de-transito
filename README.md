@@ -23,3 +23,8 @@ No arquivo [src/components/TacticalMap.tsx](src/components/TacticalMap.tsx), sub
 npm install
 npm run dev
 ```
+
+## Rede de faixas (branch `feat/rede-de-faixas`)
+- O mapa usa satélite Esri World Imagery (sem token) e desenha a rede de faixas do trecho: Africanos 3+3 faixas, canteiro com as duas aberturas, caixas amarelas, Vicente Venâncio, rua do cruzamento norte (~140 m a oeste), travessias e os 12 movimentos de conversão.
+- Movimentos: laranja = conflito principal (esquerda saindo da VV), verde = permitido, vermelho tracejado = proibido pela placa mas fisicamente possível. Clique numa feição para ver id, sentido e qual intervenção a elimina (`fechado_por`).
+- A geometria é gerada por `scripts/gera-rede.mjs` em metros locais e convertida para lat/lon. **Âncora e rumo da avenida ainda precisam ser calibrados no satélite**: ajuste `ANCORA` e `RUMO_GRAUS` no script e rode `node scripts/gera-rede.mjs` (gera `public/data/rede.geojson`).

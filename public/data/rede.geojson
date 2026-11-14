@@ -1,0 +1,1833 @@
+{
+ "type": "FeatureCollection",
+ "metadata": {
+  "descricao": "Rede de faixas paramétrica, Av. dos Africanos x Av. Vicente Venâncio (São Luís-MA)",
+  "ancora": {
+   "lat": -2.55498,
+   "lon": -44.27049
+  },
+  "rumo_graus": -32,
+  "calibrado": false,
+  "observacao": "Âncora e rumo ainda não conferidos no satélite; ajuste em scripts/gera-rede.mjs."
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "pista",
+    "id": "pista_africanos_oeste",
+    "nome": "Av. dos Africanos, pista norte (sentido oeste)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2729135,
+       -2.55343
+      ],
+      [
+       -44.2689482,
+       -2.5559054
+      ],
+      [
+       -44.268901,
+       -2.55583
+      ],
+      [
+       -44.2728664,
+       -2.5533546
+      ],
+      [
+       -44.2729135,
+       -2.55343
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "pista",
+    "id": "pista_africanos_leste",
+    "nome": "Av. dos Africanos, pista sul (sentido leste)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2729941,
+       -2.5535588
+      ],
+      [
+       -44.2690287,
+       -2.5560341
+      ],
+      [
+       -44.2689815,
+       -2.5559587
+      ],
+      [
+       -44.2729469,
+       -2.5534834
+      ],
+      [
+       -44.2729941,
+       -2.5535588
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "pista",
+    "id": "pista_vv",
+    "nome": "Av. Vicente Venâncio de Queiroga"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2709602,
+       -2.5556758
+      ],
+      [
+       -44.2708847,
+       -2.5557229
+      ],
+      [
+       -44.2705035,
+       -2.5551135
+      ],
+      [
+       -44.270579,
+       -2.5550664
+      ],
+      [
+       -44.2709602,
+       -2.5556758
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "pista",
+    "id": "pista_norte",
+    "nome": "Rua do cruzamento norte"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2715189,
+       -2.5541958
+      ],
+      [
+       -44.2714686,
+       -2.5542272
+      ],
+      [
+       -44.2710874,
+       -2.5536177
+      ],
+      [
+       -44.2711377,
+       -2.5535863
+      ],
+      [
+       -44.2715189,
+       -2.5541958
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "canteiro",
+    "id": "canteiro_1",
+    "nome": "Canteiro central"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2729469,
+       -2.5534834
+      ],
+      [
+       -44.2716353,
+       -2.5543021
+      ],
+      [
+       -44.2716019,
+       -2.5542488
+      ],
+      [
+       -44.2729135,
+       -2.55343
+      ],
+      [
+       -44.2729469,
+       -2.5534834
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "canteiro",
+    "id": "canteiro_2",
+    "nome": "Canteiro central"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2715133,
+       -2.5543783
+      ],
+      [
+       -44.2706058,
+       -2.5549448
+      ],
+      [
+       -44.2705725,
+       -2.5548915
+      ],
+      [
+       -44.2714799,
+       -2.554325
+      ],
+      [
+       -44.2715133,
+       -2.5543783
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "canteiro",
+    "id": "canteiro_3",
+    "nome": "Canteiro central"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2704075,
+       -2.5550685
+      ],
+      [
+       -44.2689815,
+       -2.5559587
+      ],
+      [
+       -44.2689482,
+       -2.5559054
+      ],
+      [
+       -44.2703742,
+       -2.5550152
+      ],
+      [
+       -44.2704075,
+       -2.5550685
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "abertura",
+    "id": "abertura_vv",
+    "nome": "Abertura do canteiro em frente à Vicente Venâncio",
+    "intervencao_fecha": "fechar_abertura_vv"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2706058,
+       -2.5549448
+      ],
+      [
+       -44.2704075,
+       -2.5550685
+      ],
+      [
+       -44.2703742,
+       -2.5550152
+      ],
+      [
+       -44.2705725,
+       -2.5548915
+      ],
+      [
+       -44.2706058,
+       -2.5549448
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "abertura",
+    "id": "abertura_norte",
+    "nome": "Abertura do canteiro no cruzamento norte",
+    "intervencao_fecha": "fechar_abertura_norte"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2716353,
+       -2.5543021
+      ],
+      [
+       -44.2715133,
+       -2.5543783
+      ],
+      [
+       -44.2714799,
+       -2.554325
+      ],
+      [
+       -44.2716019,
+       -2.5542488
+      ],
+      [
+       -44.2716353,
+       -2.5543021
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "caixa_amarela",
+    "id": "caixa_vv_pista_norte",
+    "nome": "Caixa \"Não feche o cruzamento\" (Vicente Venâncio, pista norte)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2705725,
+       -2.5548915
+      ],
+      [
+       -44.2703742,
+       -2.5550152
+      ],
+      [
+       -44.270327,
+       -2.5549398
+      ],
+      [
+       -44.2705253,
+       -2.554816
+      ],
+      [
+       -44.2705725,
+       -2.5548915
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "caixa_amarela",
+    "id": "caixa_vv_pista_sul",
+    "nome": "Caixa \"Não feche o cruzamento\" (Vicente Venâncio, pista sul)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.270653,
+       -2.5550202
+      ],
+      [
+       -44.2704547,
+       -2.555144
+      ],
+      [
+       -44.2704075,
+       -2.5550685
+      ],
+      [
+       -44.2706058,
+       -2.5549448
+      ],
+      [
+       -44.270653,
+       -2.5550202
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "caixa_amarela",
+    "id": "caixa_norte_pista_norte",
+    "nome": "Caixa \"Não feche o cruzamento\" (cruzamento norte, pista norte)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2716019,
+       -2.5542488
+      ],
+      [
+       -44.2714799,
+       -2.554325
+      ],
+      [
+       -44.2714327,
+       -2.5542496
+      ],
+      [
+       -44.2715548,
+       -2.5541734
+      ],
+      [
+       -44.2716019,
+       -2.5542488
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "caixa_amarela",
+    "id": "caixa_norte_pista_sul",
+    "nome": "Caixa \"Não feche o cruzamento\" (cruzamento norte, pista sul)"
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -44.2716825,
+       -2.5543776
+      ],
+      [
+       -44.2715604,
+       -2.5544537
+      ],
+      [
+       -44.2715133,
+       -2.5543783
+      ],
+      [
+       -44.2716353,
+       -2.5543021
+      ],
+      [
+       -44.2716825,
+       -2.5543776
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "africanos_oeste_0",
+    "via": "africanos",
+    "sentido": "oeste",
+    "indice": 0,
+    "nome": "Africanos sentido oeste, faixa esquerda",
+    "vel_max_kmh": 60
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2689403,
+      -2.5558928
+     ],
+     [
+      -44.2729057,
+      -2.5534175
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "africanos_leste_0",
+    "via": "africanos",
+    "sentido": "leste",
+    "indice": 0,
+    "nome": "Africanos sentido leste, faixa esquerda",
+    "vel_max_kmh": 60
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2729548,
+      -2.5534959
+     ],
+     [
+      -44.2689894,
+      -2.5559713
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "africanos_oeste_1",
+    "via": "africanos",
+    "sentido": "oeste",
+    "indice": 1,
+    "nome": "Africanos sentido oeste, faixa central",
+    "vel_max_kmh": 60
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2689246,
+      -2.5558677
+     ],
+     [
+      -44.27289,
+      -2.5533923
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "africanos_leste_1",
+    "via": "africanos",
+    "sentido": "leste",
+    "indice": 1,
+    "nome": "Africanos sentido leste, faixa central",
+    "vel_max_kmh": 60
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2729705,
+      -2.5535211
+     ],
+     [
+      -44.2690051,
+      -2.5559964
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "africanos_oeste_2",
+    "via": "africanos",
+    "sentido": "oeste",
+    "indice": 2,
+    "nome": "Africanos sentido oeste, faixa direita",
+    "vel_max_kmh": 60
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2689089,
+      -2.5558426
+     ],
+     [
+      -44.2728742,
+      -2.5533672
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "africanos_leste_2",
+    "via": "africanos",
+    "sentido": "leste",
+    "indice": 2,
+    "nome": "Africanos sentido leste, faixa direita",
+    "vel_max_kmh": 60
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2729862,
+      -2.5535462
+     ],
+     [
+      -44.2690209,
+      -2.5560216
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "vv_entrada",
+    "via": "vicente_venancio",
+    "sentido": "sul",
+    "nome": "Vicente Venâncio, entrando (sentido sul)",
+    "vel_max_kmh": 40
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2705664,
+      -2.5550742
+     ],
+     [
+      -44.2709476,
+      -2.5556837
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "vv_saida_esq",
+    "via": "vicente_venancio",
+    "sentido": "norte",
+    "nome": "Vicente Venâncio, saída à esquerda",
+    "vel_max_kmh": 40
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2709225,
+      -2.5556994
+     ],
+     [
+      -44.2705413,
+      -2.5550899
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "vv_saida_dir",
+    "via": "vicente_venancio",
+    "sentido": "norte",
+    "nome": "Vicente Venâncio, saída à direita",
+    "vel_max_kmh": 40
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2708973,
+      -2.5557151
+     ],
+     [
+      -44.2705161,
+      -2.5551056
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "norte_chegada",
+    "via": "rua_norte",
+    "sentido": "sul",
+    "nome": "Rua do norte, chegando à Africanos",
+    "vel_max_kmh": 40
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2711251,
+      -2.5535942
+     ],
+     [
+      -44.2715063,
+      -2.5542036
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "faixa",
+    "id": "norte_saida",
+    "via": "rua_norte",
+    "sentido": "norte",
+    "nome": "Rua do norte, saindo da Africanos",
+    "vel_max_kmh": 40
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2714812,
+      -2.5542193
+     ],
+     [
+      -44.2711,
+      -2.5536099
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "vv_dir_para_leste",
+    "nome": "VV → Africanos leste (direita)",
+    "possivel": true,
+    "fechado_por": null,
+    "conflito": null,
+    "de": "vv_saida_dir",
+    "para": "africanos_leste_2",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2705161,
+      -2.5551056
+     ],
+     [
+      -44.2705148,
+      -2.5551047
+     ],
+     [
+      -44.2705125,
+      -2.5551044
+     ],
+     [
+      -44.2705093,
+      -2.5551047
+     ],
+     [
+      -44.2705052,
+      -2.5551057
+     ],
+     [
+      -44.2705003,
+      -2.5551072
+     ],
+     [
+      -44.2704947,
+      -2.5551093
+     ],
+     [
+      -44.2704883,
+      -2.5551119
+     ],
+     [
+      -44.2704813,
+      -2.555115
+     ],
+     [
+      -44.2704737,
+      -2.5551186
+     ],
+     [
+      -44.2704656,
+      -2.5551227
+     ],
+     [
+      -44.270457,
+      -2.5551272
+     ],
+     [
+      -44.270448,
+      -2.5551321
+     ],
+     [
+      -44.2704386,
+      -2.5551373
+     ],
+     [
+      -44.2704289,
+      -2.555143
+     ],
+     [
+      -44.2704189,
+      -2.5551489
+     ],
+     [
+      -44.2704087,
+      -2.5551552
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "vv_esq_para_oeste",
+    "nome": "VV → Africanos oeste (esquerda, cruza 3 faixas + abertura)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_vv",
+    "conflito": "colisao_lateral",
+    "de": "vv_saida_esq",
+    "para": "africanos_oeste_0",
+    "permitido": true,
+    "principal": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2705413,
+      -2.5550899
+     ],
+     [
+      -44.270533,
+      -2.5550751
+     ],
+     [
+      -44.2705266,
+      -2.5550596
+     ],
+     [
+      -44.2705218,
+      -2.5550438
+     ],
+     [
+      -44.2705188,
+      -2.5550277
+     ],
+     [
+      -44.2705174,
+      -2.5550114
+     ],
+     [
+      -44.2705176,
+      -2.554995
+     ],
+     [
+      -44.2705195,
+      -2.5549788
+     ],
+     [
+      -44.2705229,
+      -2.5549627
+     ],
+     [
+      -44.2705278,
+      -2.5549469
+     ],
+     [
+      -44.2705342,
+      -2.5549315
+     ],
+     [
+      -44.2705422,
+      -2.5549167
+     ],
+     [
+      -44.2705515,
+      -2.5549026
+     ],
+     [
+      -44.2705623,
+      -2.5548892
+     ],
+     [
+      -44.2705744,
+      -2.5548768
+     ],
+     [
+      -44.2705879,
+      -2.5548653
+     ],
+     [
+      -44.2706027,
+      -2.5548551
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "leste_para_vv",
+    "nome": "Africanos leste → VV (direita)",
+    "possivel": true,
+    "fechado_por": null,
+    "conflito": null,
+    "de": "africanos_leste_2",
+    "para": "vv_entrada",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2706833,
+      -2.5549838
+     ],
+     [
+      -44.2706706,
+      -2.5549918
+     ],
+     [
+      -44.2706584,
+      -2.5549997
+     ],
+     [
+      -44.2706466,
+      -2.5550075
+     ],
+     [
+      -44.2706355,
+      -2.555015
+     ],
+     [
+      -44.2706249,
+      -2.5550224
+     ],
+     [
+      -44.270615,
+      -2.5550294
+     ],
+     [
+      -44.2706059,
+      -2.5550361
+     ],
+     [
+      -44.2705975,
+      -2.5550425
+     ],
+     [
+      -44.27059,
+      -2.5550484
+     ],
+     [
+      -44.2705834,
+      -2.5550539
+     ],
+     [
+      -44.2705778,
+      -2.5550588
+     ],
+     [
+      -44.2705732,
+      -2.5550632
+     ],
+     [
+      -44.2705697,
+      -2.555067
+     ],
+     [
+      -44.2705674,
+      -2.5550701
+     ],
+     [
+      -44.2705663,
+      -2.5550725
+     ],
+     [
+      -44.2705664,
+      -2.5550742
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "oeste_para_vv",
+    "nome": "Africanos oeste → VV (esquerda pela abertura)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_vv",
+    "conflito": "conversao_proibida",
+    "de": "africanos_oeste_0",
+    "para": "vv_entrada",
+    "permitido": false
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2703282,
+      -2.5550265
+     ],
+     [
+      -44.2703439,
+      -2.5550177
+     ],
+     [
+      -44.2703601,
+      -2.5550105
+     ],
+     [
+      -44.2703766,
+      -2.5550051
+     ],
+     [
+      -44.2703934,
+      -2.5550013
+     ],
+     [
+      -44.2704102,
+      -2.5549991
+     ],
+     [
+      -44.270427,
+      -2.5549985
+     ],
+     [
+      -44.2704436,
+      -2.5549994
+     ],
+     [
+      -44.27046,
+      -2.5550019
+     ],
+     [
+      -44.270476,
+      -2.5550059
+     ],
+     [
+      -44.2704914,
+      -2.5550114
+     ],
+     [
+      -44.2705062,
+      -2.5550183
+     ],
+     [
+      -44.2705203,
+      -2.5550267
+     ],
+     [
+      -44.2705335,
+      -2.5550365
+     ],
+     [
+      -44.2705456,
+      -2.5550477
+     ],
+     [
+      -44.2705567,
+      -2.5550603
+     ],
+     [
+      -44.2705664,
+      -2.5550742
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "retorno_vv_leste_para_oeste",
+    "nome": "Retorno na abertura da VV (leste → oeste)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_vv",
+    "conflito": "retorno_proibido",
+    "de": "africanos_leste_0",
+    "para": "africanos_oeste_0",
+    "permitido": false
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2706518,
+      -2.5549335
+     ],
+     [
+      -44.270645,
+      -2.5549365
+     ],
+     [
+      -44.2706381,
+      -2.5549374
+     ],
+     [
+      -44.2706311,
+      -2.5549364
+     ],
+     [
+      -44.2706243,
+      -2.5549337
+     ],
+     [
+      -44.2706176,
+      -2.5549296
+     ],
+     [
+      -44.2706114,
+      -2.5549242
+     ],
+     [
+      -44.2706057,
+      -2.5549179
+     ],
+     [
+      -44.2706008,
+      -2.5549109
+     ],
+     [
+      -44.2705966,
+      -2.5549033
+     ],
+     [
+      -44.2705934,
+      -2.5548954
+     ],
+     [
+      -44.2705913,
+      -2.5548875
+     ],
+     [
+      -44.2705905,
+      -2.5548798
+     ],
+     [
+      -44.2705911,
+      -2.5548724
+     ],
+     [
+      -44.2705932,
+      -2.5548657
+     ],
+     [
+      -44.2705971,
+      -2.5548598
+     ],
+     [
+      -44.2706027,
+      -2.5548551
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "retorno_vv_oeste_para_leste",
+    "nome": "Retorno na abertura da VV (oeste → leste)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_vv",
+    "conflito": "retorno_proibido",
+    "de": "africanos_oeste_0",
+    "para": "africanos_leste_0",
+    "permitido": false
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2703282,
+      -2.5550265
+     ],
+     [
+      -44.270335,
+      -2.5550235
+     ],
+     [
+      -44.2703419,
+      -2.5550226
+     ],
+     [
+      -44.2703489,
+      -2.5550236
+     ],
+     [
+      -44.2703557,
+      -2.5550263
+     ],
+     [
+      -44.2703624,
+      -2.5550304
+     ],
+     [
+      -44.2703686,
+      -2.5550358
+     ],
+     [
+      -44.2703743,
+      -2.5550421
+     ],
+     [
+      -44.2703792,
+      -2.5550491
+     ],
+     [
+      -44.2703834,
+      -2.5550567
+     ],
+     [
+      -44.2703866,
+      -2.5550646
+     ],
+     [
+      -44.2703887,
+      -2.5550725
+     ],
+     [
+      -44.2703895,
+      -2.5550802
+     ],
+     [
+      -44.2703889,
+      -2.5550876
+     ],
+     [
+      -44.2703868,
+      -2.5550943
+     ],
+     [
+      -44.2703829,
+      -2.5551002
+     ],
+     [
+      -44.2703773,
+      -2.5551049
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "norte_dir_para_oeste",
+    "nome": "Rua norte → Africanos oeste (direita)",
+    "possivel": true,
+    "fechado_por": null,
+    "conflito": null,
+    "de": "norte_chegada",
+    "para": "africanos_oeste_2",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2715063,
+      -2.5542036
+     ],
+     [
+      -44.2715078,
+      -2.5542045
+     ],
+     [
+      -44.2715105,
+      -2.5542046
+     ],
+     [
+      -44.2715143,
+      -2.5542038
+     ],
+     [
+      -44.2715192,
+      -2.5542024
+     ],
+     [
+      -44.2715252,
+      -2.5542002
+     ],
+     [
+      -44.2715321,
+      -2.5541973
+     ],
+     [
+      -44.2715399,
+      -2.5541938
+     ],
+     [
+      -44.2715485,
+      -2.5541896
+     ],
+     [
+      -44.2715579,
+      -2.5541849
+     ],
+     [
+      -44.2715679,
+      -2.5541796
+     ],
+     [
+      -44.2715786,
+      -2.5541739
+     ],
+     [
+      -44.2715898,
+      -2.5541676
+     ],
+     [
+      -44.2716015,
+      -2.5541609
+     ],
+     [
+      -44.2716137,
+      -2.5541537
+     ],
+     [
+      -44.2716261,
+      -2.5541462
+     ],
+     [
+      -44.2716389,
+      -2.5541384
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "norte_esq_para_leste",
+    "nome": "Rua norte → Africanos leste (esquerda, cruza 3 faixas + abertura)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_norte",
+    "conflito": "colisao_lateral",
+    "de": "norte_chegada",
+    "para": "africanos_leste_0",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2715063,
+      -2.5542036
+     ],
+     [
+      -44.2715146,
+      -2.5542185
+     ],
+     [
+      -44.271521,
+      -2.5542339
+     ],
+     [
+      -44.2715258,
+      -2.5542497
+     ],
+     [
+      -44.2715288,
+      -2.5542659
+     ],
+     [
+      -44.2715302,
+      -2.5542822
+     ],
+     [
+      -44.27153,
+      -2.5542985
+     ],
+     [
+      -44.2715281,
+      -2.5543148
+     ],
+     [
+      -44.2715247,
+      -2.5543309
+     ],
+     [
+      -44.2715198,
+      -2.5543467
+     ],
+     [
+      -44.2715134,
+      -2.554362
+     ],
+     [
+      -44.2715054,
+      -2.5543769
+     ],
+     [
+      -44.2714961,
+      -2.554391
+     ],
+     [
+      -44.2714853,
+      -2.5544044
+     ],
+     [
+      -44.2714732,
+      -2.5544168
+     ],
+     [
+      -44.2714597,
+      -2.5544282
+     ],
+     [
+      -44.2714449,
+      -2.5544385
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "oeste_para_norte",
+    "nome": "Africanos oeste → rua norte (direita)",
+    "possivel": true,
+    "fechado_por": null,
+    "conflito": null,
+    "de": "africanos_oeste_2",
+    "para": "norte_saida",
+    "permitido": true
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2713643,
+      -2.5543097
+     ],
+     [
+      -44.271377,
+      -2.5543017
+     ],
+     [
+      -44.2713892,
+      -2.5542938
+     ],
+     [
+      -44.271401,
+      -2.5542861
+     ],
+     [
+      -44.2714121,
+      -2.5542785
+     ],
+     [
+      -44.2714227,
+      -2.5542712
+     ],
+     [
+      -44.2714326,
+      -2.5542641
+     ],
+     [
+      -44.2714417,
+      -2.5542574
+     ],
+     [
+      -44.2714501,
+      -2.5542511
+     ],
+     [
+      -44.2714576,
+      -2.5542451
+     ],
+     [
+      -44.2714642,
+      -2.5542397
+     ],
+     [
+      -44.2714698,
+      -2.5542347
+     ],
+     [
+      -44.2714744,
+      -2.5542303
+     ],
+     [
+      -44.2714779,
+      -2.5542266
+     ],
+     [
+      -44.2714802,
+      -2.5542234
+     ],
+     [
+      -44.2714813,
+      -2.554221
+     ],
+     [
+      -44.2714812,
+      -2.5542193
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "leste_para_norte",
+    "nome": "Africanos leste → rua norte (esquerda pela abertura)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_norte",
+    "conflito": "conversao_proibida",
+    "de": "africanos_leste_0",
+    "para": "norte_saida",
+    "permitido": false
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2717194,
+      -2.5542671
+     ],
+     [
+      -44.2717037,
+      -2.5542759
+     ],
+     [
+      -44.2716875,
+      -2.554283
+     ],
+     [
+      -44.271671,
+      -2.5542885
+     ],
+     [
+      -44.2716542,
+      -2.5542923
+     ],
+     [
+      -44.2716374,
+      -2.5542945
+     ],
+     [
+      -44.2716206,
+      -2.5542951
+     ],
+     [
+      -44.271604,
+      -2.5542941
+     ],
+     [
+      -44.2715876,
+      -2.5542917
+     ],
+     [
+      -44.2715716,
+      -2.5542877
+     ],
+     [
+      -44.2715562,
+      -2.5542822
+     ],
+     [
+      -44.2715414,
+      -2.5542752
+     ],
+     [
+      -44.2715273,
+      -2.5542668
+     ],
+     [
+      -44.2715141,
+      -2.554257
+     ],
+     [
+      -44.271502,
+      -2.5542458
+     ],
+     [
+      -44.2714909,
+      -2.5542332
+     ],
+     [
+      -44.2714812,
+      -2.5542193
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "retorno_norte_leste_para_oeste",
+    "nome": "Retorno na abertura norte (leste → oeste)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_norte",
+    "conflito": "retorno_proibido",
+    "de": "africanos_leste_0",
+    "para": "africanos_oeste_0",
+    "permitido": false
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2717194,
+      -2.5542671
+     ],
+     [
+      -44.2717126,
+      -2.5542701
+     ],
+     [
+      -44.2717057,
+      -2.554271
+     ],
+     [
+      -44.2716987,
+      -2.5542699
+     ],
+     [
+      -44.2716918,
+      -2.5542673
+     ],
+     [
+      -44.2716852,
+      -2.5542631
+     ],
+     [
+      -44.271679,
+      -2.5542578
+     ],
+     [
+      -44.2716733,
+      -2.5542515
+     ],
+     [
+      -44.2716684,
+      -2.5542444
+     ],
+     [
+      -44.2716642,
+      -2.5542368
+     ],
+     [
+      -44.271661,
+      -2.554229
+     ],
+     [
+      -44.2716589,
+      -2.5542211
+     ],
+     [
+      -44.2716581,
+      -2.5542133
+     ],
+     [
+      -44.2716587,
+      -2.554206
+     ],
+     [
+      -44.2716608,
+      -2.5541992
+     ],
+     [
+      -44.2716647,
+      -2.5541934
+     ],
+     [
+      -44.2716703,
+      -2.5541886
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "movimento",
+    "id": "retorno_norte_oeste_para_leste",
+    "nome": "Retorno na abertura norte (oeste → leste)",
+    "possivel": true,
+    "fechado_por": "fechar_abertura_norte",
+    "conflito": "retorno_proibido",
+    "de": "africanos_oeste_0",
+    "para": "africanos_leste_0",
+    "permitido": false
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2713958,
+      -2.55436
+     ],
+     [
+      -44.2714026,
+      -2.554357
+     ],
+     [
+      -44.2714095,
+      -2.5543561
+     ],
+     [
+      -44.2714165,
+      -2.5543572
+     ],
+     [
+      -44.2714233,
+      -2.5543599
+     ],
+     [
+      -44.27143,
+      -2.554364
+     ],
+     [
+      -44.2714362,
+      -2.5543693
+     ],
+     [
+      -44.2714419,
+      -2.5543756
+     ],
+     [
+      -44.2714468,
+      -2.5543827
+     ],
+     [
+      -44.271451,
+      -2.5543903
+     ],
+     [
+      -44.2714542,
+      -2.5543981
+     ],
+     [
+      -44.2714563,
+      -2.5544061
+     ],
+     [
+      -44.2714571,
+      -2.5544138
+     ],
+     [
+      -44.2714565,
+      -2.5544211
+     ],
+     [
+      -44.2714544,
+      -2.5544279
+     ],
+     [
+      -44.2714505,
+      -2.5544337
+     ],
+     [
+      -44.2714449,
+      -2.5544385
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "travessia",
+    "id": "travessia_vv",
+    "nome": "Travessia da Africanos junto à VV",
+    "faixas_a_cruzar": 6,
+    "refugio_no_canteiro": false
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.2704242,
+      -2.555163
+     ],
+     [
+      -44.2702965,
+      -2.5549588
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "tipo": "travessia",
+    "id": "travessia_norte",
+    "nome": "Travessia da Africanos junto à rua norte",
+    "faixas_a_cruzar": 6,
+    "refugio_no_canteiro": false
+   },
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -44.271713,
+      -2.5543585
+     ],
+     [
+      -44.2715853,
+      -2.5541543
+     ]
+    ]
+   }
+  }
+ ]
+}
