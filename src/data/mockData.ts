@@ -91,7 +91,9 @@ export const INITIAL_INCIDENTS: Incident[] = [
 ];
 
 /**
- * Catálogo de Intervenções (Base SINAPI/NACTO) - Fixos no código conforme especificação
+ * Elementos da ilustração do Street View (só nome e desenho). Custos, códigos SINAPI/SICRO e
+ * efeito das intervenções simuladas ficam em src/sim/intervencoes.ts; os números abaixo não são
+ * usados na tela.
  */
 export const INTERVENTIONS_CATALOG: Intervention[] = [
   {
