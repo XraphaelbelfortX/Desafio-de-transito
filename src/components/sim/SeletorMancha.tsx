@@ -1,20 +1,21 @@
 import React from 'react';
+import { PALETA } from './paleta';
 
-export type Mancha = 'conflitos' | 'infracoes' | 'ocorrencias';
+export type Mancha = 'conflitos' | 'infracoes' | 'relatos';
 
 const OPCOES: { id: Mancha; nome: string; rampa: string }[] = [
-  { id: 'conflitos', nome: 'Quase-acidentes', rampa: 'from-gv-orange to-gv-red' },
-  { id: 'infracoes', nome: 'Infrações', rampa: 'from-pink-400 to-purple-950' },
-  { id: 'ocorrencias', nome: 'Ocorrências', rampa: 'from-gv-cyan via-gv-amber to-gv-red' },
+  { id: 'conflitos', nome: 'Quase-acidentes', rampa: 'from-orange-300 to-orange-700' },
+  { id: 'infracoes', nome: 'Infrações', rampa: 'from-red-300 to-red-800' },
+  { id: 'relatos', nome: 'Ocorrências', rampa: 'from-slate-300 to-slate-600' },
 ];
 
-const AGENTES = [
-  { cor: '#f8fafc', nome: 'Carro', borda: true },
-  { cor: '#7dd3fc', nome: 'Moto' },
-  { cor: '#c4b5fd', nome: 'Ônibus' },
-  { cor: '#fde047', nome: 'Pedestre' },
-  { cor: '#ef4444', nome: 'Infrator' },
-  { cor: '#22d3ee', nome: 'Selecionado' },
+const AGENTES: { cor: string; nome: string; borda?: boolean; anel?: string }[] = [
+  { cor: PALETA.carro, nome: 'Carro', borda: true },
+  { cor: PALETA.moto, nome: 'Moto' },
+  { cor: PALETA.onibus, nome: 'Ônibus' },
+  { cor: PALETA.pedestre, nome: 'Pedestre' },
+  { cor: 'transparent', nome: 'Contorno de infrator', anel: PALETA.infracao },
+  { cor: 'transparent', nome: 'Anel selecionado', anel: PALETA.selecionado },
 ];
 
 interface Props {
@@ -28,7 +29,7 @@ interface Props {
 /** Seletor da mancha e legenda dos agentes, no canto do mapa. */
 export const SeletorMancha: React.FC<Props> = ({ mancha, onMancha, erro, rodando, pontosSim }) => {
   const ativa = OPCOES.find((o) => o.id === mancha) ?? OPCOES[0];
-  const pontos = mancha === 'ocorrencias' ? null : pontosSim[mancha];
+  const pontos = mancha === 'relatos' ? null : pontosSim[mancha];
   const aviso =
     pontos === null
       ? 'Ocorrências já registradas no cruzamento. Não mudam com a simulação.'
@@ -67,8 +68,11 @@ export const SeletorMancha: React.FC<Props> = ({ mancha, onMancha, erro, rodando
           {AGENTES.map((a) => (
             <li key={a.nome} className="flex items-center gap-1">
               <span
-                className={`w-2.5 h-2.5 rounded-sm ${a.borda ? 'border border-gv-border' : ''}`}
-                style={{ background: a.cor }}
+                className="w-2.5 h-2.5 rounded-sm"
+                style={{
+                  background: a.cor,
+                  boxShadow: a.anel ? `inset 0 0 0 2px ${a.anel}` : a.borda ? 'inset 0 0 0 1px #94a3b8' : undefined,
+                }}
               />
               {a.nome}
             </li>

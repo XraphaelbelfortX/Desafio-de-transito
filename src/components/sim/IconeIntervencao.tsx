@@ -16,30 +16,30 @@ export const COR_CATEGORIA: Record<Categoria, { fundo: string; traco: string; ti
 };
 
 const Glifo: React.FC<{ tipo: TipoIntervencao; tinta: string }> = ({ tipo, tinta }) => {
-  const t = { stroke: tinta, strokeWidth: 1.8, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  const t = { stroke: tinta, strokeWidth: 2.4, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   switch (tipo) {
     case 'camera':
       return (
         <g {...t}>
-          <rect x="6.5" y="9" width="11" height="7.5" rx="1.5" />
-          <circle cx="12" cy="12.75" r="2.2" />
+          <rect x="5.5" y="8.4" width="13" height="8.4" rx="1.6" />
+          <circle cx="12" cy="12.6" r="2.5" />
           <path d="M9.5 9 10.5 7.2h3L14.5 9" />
         </g>
       );
     case 'semaforo':
       return (
         <g>
-          <rect x="9" y="5" width="6" height="14" rx="2" fill="#1f2937" stroke={tinta} strokeWidth="1.2" />
-          <circle cx="12" cy="8.2" r="1.45" fill="#ef4444" />
-          <circle cx="12" cy="12" r="1.45" fill="#facc15" />
-          <circle cx="12" cy="15.8" r="1.45" fill="#22c55e" />
+          <rect x="8.2" y="4.2" width="7.6" height="15.6" rx="2.2" fill="#1f2937" stroke={tinta} strokeWidth="1.4" />
+          <circle cx="12" cy="8" r="1.7" fill="#ef4444" />
+          <circle cx="12" cy="12" r="1.7" fill="#facc15" />
+          <circle cx="12" cy="16" r="1.7" fill="#22c55e" />
         </g>
       );
     case 'fechar_canteiro':
       return (
         <g {...t}>
-          <path d="M5 8.5h14M5 15.5h14" />
-          <rect x="8" y="10.4" width="8" height="3.2" rx="0.8" fill={tinta} />
+          <path d="M4.5 8h15M4.5 16h15" />
+          <rect x="7.4" y="10" width="9.2" height="4" rx="0.8" fill={tinta} />
         </g>
       );
     case 'retorno':
@@ -101,7 +101,7 @@ interface Props {
 export const IconeIntervencao: React.FC<Props> = ({ tipo, tamanho = 32, invalida, selecionada }) => {
   const cat = DEFINICAO[tipo].categoria;
   const c = COR_CATEGORIA[cat];
-  const contorno = invalida ? '#dc2626' : selecionada ? '#22d3ee' : c.traco;
+  const contorno = invalida ? '#0f172a' : selecionada ? '#22d3ee' : c.traco;
   const larguraContorno = invalida || selecionada ? 2 : 1.2;
   const tracejado = invalida ? '2.2 1.6' : undefined;
   return (
@@ -112,7 +112,7 @@ export const IconeIntervencao: React.FC<Props> = ({ tipo, tamanho = 32, invalida
       {cat === 'fiscalizacao' && <circle cx="12" cy="12" r="10.6" fill={c.fundo} stroke={contorno} strokeWidth={larguraContorno} strokeDasharray={tracejado} />}
       {cat === 'controle' && <rect x="3.4" y="1.6" width="17.2" height="20.8" rx="4" fill={c.fundo} stroke={contorno} strokeWidth={larguraContorno} strokeDasharray={tracejado} />}
       {cat === 'geometria' && <rect x="1.8" y="1.8" width="20.4" height="20.4" rx="3" fill={c.fundo} stroke={contorno} strokeWidth={larguraContorno} strokeDasharray={tracejado} />}
-      <g transform={cat === 'moderacao' ? 'translate(12 12) scale(0.78) translate(-12 -12)' : undefined}>
+      <g transform={cat === 'moderacao' ? 'translate(12 12) scale(0.9) translate(-12 -12)' : undefined}>
         <Glifo tipo={tipo} tinta={c.tinta} />
       </g>
     </svg>

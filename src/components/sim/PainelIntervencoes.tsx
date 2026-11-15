@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart3, MapPin, Minus, Plus, Save, Trash2, TrendingDown, TrendingUp, Upload } from 'lucide-react';
 import type { Metricas } from '../../sim/motor';
-import { DEFINICAO, TEMPOS_PADRAO, type TemposSemaforo } from '../../sim/intervencoes';
+import { DEFINICAO, TEMPOS_PADRAO, type TemposSemaforo, type TipoIntervencao } from '../../sim/intervencoes';
 import { formatarReais, type IdCenario, type Simulacao } from '../../sim/useSimulacao';
 import { orcarCenario, paraLocais, rodarCenario, totalConflitos, totalInfracoes } from '../../sim/cenarios';
 import { ComparacaoCenarios } from './ComparacaoCenarios';
@@ -14,6 +14,16 @@ export const COR_CENARIO: Record<'atual' | IdCenario, string> = {
 };
 
 export const MIME_INTERVENCAO = 'application/x-guardiao-intervencao';
+
+let tipoEmVoo: TipoIntervencao | null = null;
+
+/** O tipo só é lido no drop; durante o arraste o mapa consulta isto. */
+export const lerTipoArraste = () => tipoEmVoo;
+
+/** A paleta avisa qual intervenção está no cursor, porque o mapa não lê o dataTransfer no dragover. */
+export const anunciarArraste = (tipo: TipoIntervencao | null) => {
+  tipoEmVoo = tipo;
+};
 
 const num = (v: number, casas = 0) => v.toLocaleString('pt-BR', { maximumFractionDigits: casas, minimumFractionDigits: casas });
 
@@ -176,7 +186,7 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
                 const o = custoPorId.get(i.id);
                 const sel = sim.intervencaoSelecionada === i.id;
                 const valida = a?.valida === true;
-                const cor = valida ? COR_ZONA[i.tipo] : '#ef4444';
+                const cor = valida ? COR_ZONA[i.tipo] : '#64748b';
                 const escolher = () => (sel ? sim.selecionarIntervencao(null) : sim.focarIntervencao(i.id));
                 return (
                   <li

@@ -139,13 +139,14 @@ export const CartaoSugestoes: React.FC<{ assistente: Assistente }> = ({ assisten
   );
 };
 
-/** Marcadores S1, S2… no mapa, onde cada sugestão agiria. */
+/** Alfinetes S1, S2… no mapa, onde cada sugestão agiria. */
 export const MarcadoresSugestao: React.FC<{ assistente: Assistente }> = ({ assistente: a }) => (
   <>
+    <style>{`@keyframes alfinete-entra { from { transform: translateY(-12px) scale(0.55); opacity: 0; } to { transform: none; opacity: 1; } }`}</style>
     {a.sugestoes.map((s, i) => {
       const ativo = a.destacada === s.chave;
       return (
-        <Marker key={s.chave} longitude={s.lng} latitude={s.lat} anchor="center">
+        <Marker key={s.chave} longitude={s.lng} latitude={s.lat} anchor="bottom">
           <button
             type="button"
             onClick={(e) => {
@@ -153,14 +154,15 @@ export const MarcadoresSugestao: React.FC<{ assistente: Assistente }> = ({ assis
               a.destacar(ativo ? null : s.chave);
             }}
             title={`Sugestão: ${DEFINICAO[s.tipo].nome} no ${s.lugar}`}
-            className="relative flex items-center justify-center"
+            className="block"
+            style={{ animation: 'alfinete-entra 0.4s ease-out both', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.45))' }}
           >
-            <span className={`absolute w-12 h-12 rounded-full border-2 border-dashed border-violet-300 ${ativo ? 'animate-ping' : ''}`} />
-            <span
-              className={`relative flex items-center gap-1 rounded-full pl-1 pr-2 py-0.5 text-[11px] font-extrabold text-white shadow-lg border border-violet-200 ${ativo ? 'bg-violet-600 scale-110' : 'bg-violet-700/90'}`}
-            >
-              <Lightbulb className="w-3.5 h-3.5" />S{i + 1}
-            </span>
+            <svg width="32" height="40" viewBox="0 0 32 40" aria-hidden="true" className={ativo ? 'scale-110 origin-bottom' : ''}>
+              <path d="M16 38s-12-12.5-12-22a12 12 0 1 1 24 0c0 9.5-12 22-12 22z" fill="#2563eb" stroke="#ffffff" strokeWidth="1.6" />
+              <text x="16" y="18" textAnchor="middle" fontSize="11" fontWeight="800" fill="#ffffff">
+                S{i + 1}
+              </text>
+            </svg>
           </button>
         </Marker>
       );
