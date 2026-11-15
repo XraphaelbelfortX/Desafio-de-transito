@@ -1,11 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Layer, Marker, Popup, Source } from 'react-map-gl';
 import { paraGeo, paraLocal, type Vec2 } from '../../sim/geometria';
 import type { Rede } from '../../sim/rede';
-import { DEFINICAO, type AnaliseIntervencao, type Intervencao, type TipoIntervencao } from '../../sim/intervencoes';
+import { analisar, DEFINICAO, type AnaliseIntervencao, type Intervencao, type TipoIntervencao } from '../../sim/intervencoes';
 import type { Simulacao } from '../../sim/useSimulacao';
 import { IconeIntervencao } from './IconeIntervencao';
-import { COR_ZONA, ROTULO_CURTO, tintaSobre } from './zonasIntervencao';
+import { PALETA } from './paleta';
+import { ROTULO_CURTO, tintaSobre } from './zonasIntervencao';
 
 /**
  * Intervenções no mapa: a mancha colorida é onde cada uma age; o ícone é só a alça para arrastar.
@@ -30,8 +31,6 @@ const circulo = (rede: Rede, c: Vec2, r: number) => {
   }
   return [anel];
 };
-
-const BORDA_ESCURA = new Set<TipoIntervencao>(['faixa_elevada', 'refugio', 'lombada', 'tachoes', 'semaforo']);
 
 /** Centro da mancha: é para onde o mapa vai e onde o rótulo senta. */
 export function centroDaZona(rede: Rede, tipo: TipoIntervencao, a: AnaliseIntervencao): Vec2 {
@@ -82,7 +81,7 @@ interface CenaZonas {
 }
 
 /** Desenho no chão de cada intervenção, no lugar em que ela tem efeito. */
-function cena(rede: Rede, ints: Intervencao[], analises: Map<string, AnaliseIntervencao>, selecionada: string | null): CenaZonas {
+function cena(rede: Rede, ints: Intervencao[], analises: Map<string, AnaliseIntervencao>, selecionada: string | null, previa = false): CenaZonas {
   const areas: unknown[] = [];
   const solidos: unknown[] = [];
   const ligacoes: unknown[] = [];
@@ -104,18 +103,13 @@ function cena(rede: Rede, ints: Intervencao[], analises: Map<string, AnaliseInte
     const a = analises.get(i.id);
     if (!a) return;
     const sel = i.id === selecionada;
-    const cor = a.valida ? COR_ZONA[i.tipo] : '#ef4444';
-    const clara = i.tipo === 'faixa_elevada' || i.tipo === 'refugio';
-    const opac = !a.valida
-      ? sel ? 0.38 : 0.22
-      : clara
-        ? sel ? 0.78 : alguma ? 0.3 : 0.58
-        : sel ? 0.42 : alguma ? 0.14 : 0.28;
+    const cor = PALETA.intervencao;
+    const opac = previa ? 0.4 : !a.valida ? 0.22 : sel ? 0.42 : alguma ? 0.16 : 0.3;
     const marca = {
       id: i.id,
-      zid: i.id,
+      zid: previa ? '' : i.id,
       cor,
-      borda: sel ? '#22d3ee' : BORDA_ESCURA.has(i.tipo) || !a.valida ? '#0f172a' : cor,
+      borda: sel ? PALETA.selecionado : PALETA.intervencao,
       opac,
       sel: sel ? 1 : 0,
     };
@@ -190,7 +184,7 @@ function cena(rede: Rede, ints: Intervencao[], analises: Map<string, AnaliseInte
     const chave = `${lng.toFixed(5)}:${lat.toFixed(5)}`;
     const slot = ocupacao.get(chave) ?? 0;
     ocupacao.set(chave, slot + 1);
-    rotulos.push({
+    if (!previa) rotulos.push({
       id: i.id,
       n: indice + 1,
       lng,
@@ -208,6 +202,71 @@ function cena(rede: Rede, ints: Intervencao[], analises: Map<string, AnaliseInte
   const colecao = (features: unknown[]) => ({ type: 'FeatureCollection' as const, features });
   return { areas: colecao(areas), solidos: colecao(solidos), ligacoes: colecao(ligacoes), rotulos };
 }
+
+interface Previa {
+  tipo: TipoIntervencao;
+  lng: number;
+  lat: number;
+  origem: 'painel' | 'icone';
+}
+
+const ouvintesPrevia = new Set<(p: Previa | null) => void>();
+let previaAtual: Previa | null = null;
+
+/** A prévia não passa pelo estado do mapa, para o arraste do ícone não saltar. */
+export function definirPrevia(p: Previa | null) {
+  previaAtual = p;
+  ouvintesPrevia.forEach((fn) => fn(p));
+}
+
+function usePrevia() {
+  const [p, setP] = useState<Previa | null>(previaAtual);
+  useEffect(() => {
+    const fn = (v: Previa | null) => setP(v);
+    ouvintesPrevia.add(fn);
+    return () => {
+      ouvintesPrevia.delete(fn);
+    };
+  }, []);
+  return p;
+}
+
+const PreviaArraste: React.FC<{ rede: Rede }> = ({ rede }) => {
+  const previa = usePrevia();
+  const geo = useMemo(() => {
+    if (!previa) return null;
+    const local = paraLocal(rede.quadro, previa.lng, previa.lat);
+    const a = analisar(rede, { id: 'previa', tipo: previa.tipo, p: local });
+    return cena(rede, [{ id: 'previa', tipo: previa.tipo, lng: previa.lng, lat: previa.lat }], new Map([['previa', a]]), null, true);
+  }, [rede, previa]);
+  if (!previa || !geo) return null;
+  return (
+    <>
+      <Source id="sim-int-previa" type="geojson" data={geo.areas as never}>
+        <Layer id="sim-int-previa-fill" type="fill" paint={{ 'fill-color': PALETA.intervencao, 'fill-opacity': 0.38 }} />
+        <Layer
+          id="sim-int-previa-borda"
+          type="line"
+          paint={{ 'line-color': PALETA.intervencao, 'line-width': 2, 'line-dasharray': [1.2, 0.8], 'line-opacity': 0.95 }}
+        />
+      </Source>
+      <Source id="sim-int-previa-lig" type="geojson" data={geo.ligacoes as never}>
+        <Layer
+          id="sim-int-previa-lig"
+          type="line"
+          paint={{ 'line-color': '#f8fafc', 'line-width': 2, 'line-dasharray': [1.2, 1], 'line-opacity': 0.9 }}
+        />
+      </Source>
+      {previa.origem === 'painel' && (
+        <Marker longitude={previa.lng} latitude={previa.lat} anchor="center" style={{ zIndex: 6 }}>
+          <div className="pointer-events-none" style={{ filter: 'drop-shadow(0 8px 5px rgba(0,0,0,0.55))' }}>
+            <IconeIntervencao tipo={previa.tipo} tamanho={36} />
+          </div>
+        </Marker>
+      )}
+    </>
+  );
+};
 
 export const CamadaIntervencoes: React.FC<{ sim: Simulacao }> = ({ sim }) => {
   const { rede, intervencoes, analises, intervencaoSelecionada } = sim;
@@ -241,7 +300,7 @@ export const CamadaIntervencoes: React.FC<{ sim: Simulacao }> = ({ sim }) => {
           paint={{
             'fill-extrusion-color': ['get', 'cor'],
             'fill-extrusion-height': ['get', 'alt'],
-            'fill-extrusion-opacity': 0.92,
+            'fill-extrusion-opacity': 0.4,
           }}
         />
       </Source>
@@ -273,7 +332,7 @@ export const CamadaIntervencoes: React.FC<{ sim: Simulacao }> = ({ sim }) => {
               type="button"
               className={`flex items-center gap-1 rounded-full border pl-0.5 pr-2 py-0.5 text-[11px] font-bold shadow-lg ${
                 sel ? 'border-cyan-300 ring-2 ring-cyan-300/80' : 'border-white/80'
-              } ${r.valida ? 'bg-slate-950 text-white' : 'bg-red-800 text-white'}`}
+              } ${r.valida ? 'bg-slate-950 text-white' : 'bg-slate-700 text-white'}`}
             >
               <span
                 className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold"
@@ -298,8 +357,15 @@ export const CamadaIntervencoes: React.FC<{ sim: Simulacao }> = ({ sim }) => {
             anchor="center"
             draggable
             style={{ zIndex: sel ? 5 : 3 }}
-            onDragStart={() => sim.selecionarIntervencao(i.id)}
-            onDragEnd={(e) => sim.mover(i.id, e.lngLat.lng, e.lngLat.lat)}
+            onDragStart={() => {
+              sim.selecionarIntervencao(i.id);
+              definirPrevia({ tipo: i.tipo, lng: i.lng, lat: i.lat, origem: 'icone' });
+            }}
+            onDrag={(e) => definirPrevia({ tipo: i.tipo, lng: e.lngLat.lng, lat: e.lngLat.lat, origem: 'icone' })}
+            onDragEnd={(e) => {
+              definirPrevia(null);
+              sim.mover(i.id, e.lngLat.lng, e.lngLat.lat);
+            }}
             onClick={(e) => {
               e.originalEvent.stopPropagation();
               sim.selecionarIntervencao(sel ? null : i.id);
@@ -309,7 +375,7 @@ export const CamadaIntervencoes: React.FC<{ sim: Simulacao }> = ({ sim }) => {
               type="button"
               title={a ? `${DEFINICAO[i.tipo].nome}: ${a.efeito}` : DEFINICAO[i.tipo].nome}
               aria-label={`${DEFINICAO[i.tipo].nome}. ${a?.efeito ?? ''} Arraste para mudar o lugar.`}
-              className="cursor-grab active:cursor-grabbing drop-shadow-[0_2px_3px_rgba(0,0,0,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 rounded"
+              className="cursor-grab active:cursor-grabbing drop-shadow-[0_6px_4px_rgba(0,0,0,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 rounded"
             >
               <IconeIntervencao tipo={i.tipo} tamanho={sel ? 40 : 32} invalida={a ? !a.valida : false} selecionada={sel} />
             </button>
@@ -335,11 +401,12 @@ export const CamadaIntervencoes: React.FC<{ sim: Simulacao }> = ({ sim }) => {
               <p className="text-[11px] text-slate-600 mt-1">A linha tracejada liga a mancha ao ícone.</p>
             )}
             {!selecionada.valida && (
-              <p className="text-[11px] text-red-700 font-medium mt-1">Arraste o ícone até o lugar certo.</p>
+              <p className="text-[11px] text-slate-700 font-medium mt-1">Arraste o ícone até o lugar certo.</p>
             )}
           </div>
         </Popup>
       )}
+      <PreviaArraste rede={rede} />
     </>
   );
 };
