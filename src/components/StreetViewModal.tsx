@@ -9,8 +9,13 @@ import {
   MapPin,
   Layers,
   Eye,
+  Camera,
 } from 'lucide-react';
-import { Intervention } from '../types';
+import { Intervention, Incident } from '../types';
+import { GOOGLE_MAPS_API_KEY } from '../lib/googleMaps';
+import { StreetViewReal } from './StreetViewReal';
+import type { Intervencao } from '../sim/intervencoes';
+import { INTERSECTION_CENTER } from '../data/mockData';
 
 interface StreetViewModalProps {
   isOpen: boolean;
@@ -18,6 +23,8 @@ interface StreetViewModalProps {
   activeInterventions: string[];
   interventionsCatalog: Intervention[];
   onToggleIntervention: (id: string) => void;
+  incidents: Incident[];
+  intervencoesReais: Intervencao[];
 }
 
 export const StreetViewModal: React.FC<StreetViewModalProps> = ({
@@ -26,8 +33,11 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
   activeInterventions,
   interventionsCatalog,
   onToggleIntervention,
+  incidents,
+  intervencoesReais,
 }) => {
   const [viewMode, setViewMode] = useState<'projected' | 'before'>('projected');
+  const [fonte, setFonte] = useState<'ilustracao' | 'real'>(GOOGLE_MAPS_API_KEY ? 'real' : 'ilustracao');
 
   if (!isOpen) return null;
 
@@ -42,74 +52,108 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gv-border/75 backdrop-blur-sm p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="street-view-title"
     >
-      <div className="bg-white rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl border border-slate-200 animate-toast">
+      <div className="bg-gv-card rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl border border-gv-border animate-toast">
         {/* Header Corporativo SMTT */}
-        <div className="bg-gov-navy text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
+        <div className="bg-gv-panel text-white px-6 py-4 flex items-center justify-between border-b border-gv-border">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-blue-300 uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-xs font-semibold text-gv-cyan uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Ilustração antes e depois, fora de escala</span>
             </div>
             <h3 id="street-view-title" className="text-lg font-bold mt-0.5 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-red-400" />
+              <MapPin className="w-4 h-4 text-gv-red" />
               Street View — Av. dos Africanos × Av. Vicente Venâncio de Queiroga
             </h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+            className="p-2 rounded-lg bg-gv-panel/80 hover:bg-gv-panel text-gv-muted hover:text-white transition"
             aria-label="Fechar modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Barra de Controle Antes / Depois */}
-        <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        {/* Fonte da imagem: ilustração desenhada ou foto real do Google Street View */}
+        <div className="bg-gv-panel px-6 pt-3 border-b border-gv-border flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-              <Eye className="w-4 h-4 text-blue-800" />
-              Modo de Inspeção Visual:
+            <span className="text-xs font-semibold text-gv-muted flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-gv-cyan" />
+              Fonte da imagem:
             </span>
-            <div className="inline-flex rounded-lg p-0.5 bg-slate-200">
+            <div className="inline-flex rounded-lg p-0.5 bg-gv-border">
               <button
                 type="button"
-                onClick={() => setViewMode('projected')}
+                onClick={() => setFonte('ilustracao')}
                 className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
-                  viewMode === 'projected'
-                    ? 'bg-gov-navy text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                  fonte === 'ilustracao' ? 'bg-gv-panel text-white shadow-sm' : 'text-gv-muted hover:text-gv-ink'
                 }`}
               >
-                Com Ciclofaixa & Intervenções Projetadas
+                Ilustração
               </button>
               <button
                 type="button"
-                onClick={() => setViewMode('before')}
+                onClick={() => setFonte('real')}
                 className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
-                  viewMode === 'before'
-                    ? 'bg-red-700 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                  fonte === 'real' ? 'bg-gv-cyan text-gv-cyanink shadow-sm' : 'text-gv-muted hover:text-gv-ink'
                 }`}
               >
-                Situação Atual (Sem Segregação)
+                Street View real (Google)
               </button>
             </div>
           </div>
-
-          <div className="text-xs text-slate-500 font-mono">
-            Coordenadas: -2.55498, -44.27049 • Cruzamento Coroado / Parque Timbiras
+          <div className="text-xs text-gv-muted font-mono">
+            Coordenadas: {INTERSECTION_CENTER.lat}, {INTERSECTION_CENTER.lng}
           </div>
         </div>
 
-        {/* Viewport Street View Placeholder Realista com Projeção Tática */}
-        <div className="relative w-full h-[390px] bg-slate-900 overflow-hidden select-none">
+        {/* Barra de Controle Antes / Depois (só vale para a ilustração) */}
+        {fonte === 'ilustracao' && (
+          <div className="bg-gv-panel px-6 py-3 border-b border-gv-border flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-gv-muted flex items-center gap-1.5">
+                <Eye className="w-4 h-4 text-gv-cyan" />
+                Modo de Inspeção Visual:
+              </span>
+              <div className="inline-flex rounded-lg p-0.5 bg-gv-border">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('projected')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                    viewMode === 'projected'
+                      ? 'bg-gv-panel text-white shadow-sm'
+                      : 'text-gv-muted hover:text-gv-ink'
+                  }`}
+                >
+                  Com Ciclofaixa & Intervenções Projetadas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('before')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                    viewMode === 'before'
+                      ? 'bg-gv-red text-white shadow-sm'
+                      : 'text-gv-muted hover:text-gv-ink'
+                  }`}
+                >
+                  Situação Atual (Sem Segregação)
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Viewport: foto real do Google Street View, ou a ilustração desenhada */}
+        {fonte === 'real' ? (
+          <StreetViewReal centro={INTERSECTION_CENTER} incidents={incidents} intervencoes={intervencoesReais} />
+        ) : (
+        <div className="relative w-full h-[390px] bg-gv-bg overflow-hidden select-none">
           {/* Fotografia de fundo / Perspectiva Urbana + Ciclofaixa Projetada em SVG Vetorial de Alta Precisão */}
           <svg
             viewBox="0 0 960 440"
@@ -315,77 +359,84 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({
           {/* Badges de HUD sobre a imagem Street View */}
           <div className="absolute top-3 left-3 flex flex-wrap gap-2">
             {showCiclofaixa && (
-              <span className="bg-red-600/95 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5 border border-red-300/40">
+              <span className="bg-gv-red/95 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5 border border-gv-red/40">
                 <Bike className="w-4 h-4" />
                 Pintura Ciclofaixa Vermelha (Projetada)
               </span>
             )}
             {showTachao && (
-              <span className="bg-amber-500/95 text-slate-950 text-xs font-bold px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5">
+              <span className="bg-gv-amber/95 text-gv-cyanink text-xs font-bold px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5">
                 <ShieldAlert className="w-4 h-4" />
                 Tachões Refletivos Bidirecionais
               </span>
             )}
             {showNeckdown && (
-              <span className="bg-emerald-600/95 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5">
+              <span className="bg-gv-green/95 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md flex items-center gap-1.5">
                 <Snail className="w-4 h-4" />
                 Avanço de Calçada (Neckdown)
               </span>
             )}
           </div>
 
-          <div className="absolute bottom-3 left-3 right-3 bg-slate-950/85 backdrop-blur-md text-white p-3 rounded-xl border border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="absolute bottom-3 left-3 right-3 bg-gv-border/85 backdrop-blur-md text-white p-3 rounded-xl border border-gv-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-bold text-blue-300">
+              <p className="text-xs font-bold text-gv-cyan">
                 Desenho para conversar com a comunidade
               </p>
-              <p className="text-xs text-slate-200 mt-0.5">
+              <p className="text-xs text-gv-ink mt-0.5">
                 Esta tela não altera a simulação. O efeito medido de cada intervenção está no mapa e na comparação de cenários.
               </p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <Layers className="w-4 h-4 text-blue-400" />
-              <span className="text-xs font-semibold text-slate-300">
+              <Layers className="w-4 h-4 text-gv-cyan" />
+              <span className="text-xs font-semibold text-gv-muted">
                 Ligue e desligue os elementos abaixo:
               </span>
             </div>
           </div>
         </div>
+        )}
 
-        {/* Rodapé Interativo do Modal para ativar/desativar intervenções em tempo real */}
-        <div className="p-4 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Rodapé: toggles da ilustração (só nesse modo) + botão de fechar (sempre) */}
+        <div className="p-4 bg-gv-panel flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            {interventionsCatalog.map((item) => {
-              const isActive = activeInterventions.includes(item.id);
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setViewMode('projected');
-                    onToggleIntervention(item.id);
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                    isActive
-                      ? 'bg-blue-900 text-white border-blue-900 shadow-sm'
-                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                  }`}
-                >
-                  <CheckCircle2
-                    className={`w-3.5 h-3.5 ${
-                      isActive ? 'text-emerald-400' : 'text-slate-300'
+            {fonte === 'ilustracao' &&
+              interventionsCatalog.map((item) => {
+                const isActive = activeInterventions.includes(item.id);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setViewMode('projected');
+                      onToggleIntervention(item.id);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                      isActive
+                        ? 'bg-gv-cyan text-gv-cyanink border-gv-cyan shadow-sm'
+                        : 'bg-gv-card text-gv-ink border-gv-border hover:bg-gv-bg'
                     }`}
-                  />
-                  <span>{item.nome}</span>
-                </button>
-              );
-            })}
+                  >
+                    <CheckCircle2
+                      className={`w-3.5 h-3.5 ${
+                        isActive ? 'text-gv-green' : 'text-gv-muted'
+                      }`}
+                    />
+                    <span>{item.nome}</span>
+                  </button>
+                );
+              })}
+            {fonte === 'real' && (
+              <p className="text-xs text-gv-muted">
+                Pins no mapa: cor da zona para cada intervenção real colocada, e a cor da severidade para cada relato.
+              </p>
+            )}
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-gov-navy hover:bg-blue-900 text-white font-semibold text-xs transition shadow"
+            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-gv-panel hover:bg-gv-cyan text-white hover:text-gv-cyanink font-semibold text-xs transition shadow"
           >
             Voltar ao Dashboard Tático
           </button>

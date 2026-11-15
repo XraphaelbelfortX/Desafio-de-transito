@@ -107,8 +107,8 @@ export const CameraControls3D: React.FC<CameraControls3DProps> = ({
   };
 
   const btn =
-    'w-10 h-10 flex items-center justify-center text-slate-700 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-40 disabled:hover:bg-transparent';
-  const grupo = 'bg-white/95 backdrop-blur rounded-full shadow-lg border border-slate-200 overflow-hidden';
+    'w-10 h-10 flex items-center justify-center text-gv-ink hover:bg-gv-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-gv-cyan disabled:opacity-40 disabled:hover:bg-transparent';
+  const grupo = 'bg-gv-bg/90 backdrop-blur rounded-full shadow-lg border border-gv-border overflow-hidden';
 
   return (
     <div className="absolute bottom-14 right-3 z-20 flex flex-col items-end gap-2 select-none">
@@ -119,19 +119,19 @@ export const CameraControls3D: React.FC<CameraControls3DProps> = ({
           onClick={() => setMenuVistas((v) => !v)}
           aria-expanded={menuVistas}
           title="Vistas prontas do cruzamento"
-          className={`${grupo} h-10 px-3 flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100`}
+          className={`${grupo} h-10 px-3 flex items-center gap-1.5 text-xs font-semibold text-gv-ink hover:bg-gv-bg`}
         >
-          <Video className="w-4 h-4 text-blue-700" />
+          <Video className="w-4 h-4 text-gv-cyan" />
           Vistas
         </button>
         {menuVistas && (
-          <div className="absolute bottom-12 right-0 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-1 text-xs">
+          <div className="absolute bottom-12 right-0 w-56 bg-gv-card rounded-xl shadow-xl border border-gv-border py-1 text-xs">
             {vistas.map((v) => (
               <button
                 key={v.id}
                 type="button"
                 onClick={() => irPara(v)}
-                className="w-full text-left px-3 py-2 hover:bg-slate-100 text-slate-800"
+                className="w-full text-left px-3 py-2 hover:bg-gv-bg text-gv-ink"
               >
                 {v.nome}
               </button>
@@ -147,7 +147,7 @@ export const CameraControls3D: React.FC<CameraControls3DProps> = ({
           onClick={onTogglePredios}
           aria-pressed={predios3D}
           title={predios3D ? 'Ocultar prédios 3D (OpenStreetMap)' : 'Mostrar prédios 3D (OpenStreetMap)'}
-          className={`${btn} ${predios3D ? 'text-blue-700' : ''}`}
+          className={`${btn} ${predios3D ? 'text-gv-cyan' : ''}`}
         >
           <Building2 className="w-[18px] h-[18px]" />
         </button>
@@ -156,7 +156,7 @@ export const CameraControls3D: React.FC<CameraControls3DProps> = ({
           onClick={() => setOrbitando((o) => !o)}
           aria-pressed={orbitando}
           title={orbitando ? 'Parar órbita' : 'Orbitar em volta do cruzamento'}
-          className={`${btn} ${orbitando ? 'text-blue-700' : ''}`}
+          className={`${btn} ${orbitando ? 'text-gv-cyan' : ''}`}
         >
           {orbitando ? <Pause className="w-[18px] h-[18px]" /> : <Play className="w-[18px] h-[18px]" />}
         </button>
@@ -195,7 +195,7 @@ export const CameraControls3D: React.FC<CameraControls3DProps> = ({
         <button type="button" onClick={() => inclinar(15)} disabled={pitch >= 84} title="Inclinar mais" className={btn}>
           <ChevronUp className="w-5 h-5" />
         </button>
-        <span className="text-[10px] font-mono text-slate-500 tabular-nums" aria-live="polite">
+        <span className="text-[10px] font-mono text-gv-muted tabular-nums" aria-live="polite">
           {Math.round(pitch)}°
         </span>
         <button type="button" onClick={() => inclinar(-15)} disabled={pitch <= 0.5} title="Inclinar menos" className={btn}>
@@ -205,7 +205,7 @@ export const CameraControls3D: React.FC<CameraControls3DProps> = ({
           type="button"
           onClick={onToggle3D}
           title={is3D ? 'Mudar para vista 2D (de cima)' : 'Mudar para vista 3D (inclinada)'}
-          className="w-10 h-10 border-t border-slate-200 text-xs font-extrabold text-slate-800 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
+          className="w-10 h-10 border-t border-gv-border text-xs font-extrabold text-gv-ink hover:bg-gv-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-gv-cyan"
         >
           {is3D ? '2D' : '3D'}
         </button>
@@ -216,13 +216,13 @@ export const CameraControls3D: React.FC<CameraControls3DProps> = ({
         <button type="button" onClick={() => zoom(-1)} title="Afastar" className={btn}>
           <Minus className="w-4 h-4" />
         </button>
-        <span className="w-px h-5 bg-slate-200" />
+        <span className="w-px h-5 bg-gv-border" />
         <button type="button" onClick={() => zoom(1)} title="Aproximar" className={btn}>
           <Plus className="w-4 h-4" />
         </button>
       </div>
 
-      <p className="hidden md:block text-[10px] text-white/90 bg-slate-900/70 px-2 py-1 rounded">
+      <p className="hidden md:block text-[10px] text-white/90 bg-gv-bg/70 px-2 py-1 rounded">
         Ctrl + arrastar (ou botão direito) gira e inclina
       </p>
     </div>

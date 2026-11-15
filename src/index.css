@@ -29,14 +29,37 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #111a2e;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #22304d;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #3a4e78;
+}
+
+/* Popups do MapLibre/Mapbox: tema escuro do Guardião Viário (padrão da lib é fundo branco) */
+.maplibregl-popup-content,
+.mapboxgl-popup-content {
+  background: #162036;
+  border: 1px solid #22304d;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.maplibregl-popup-tip,
+.mapboxgl-popup-tip {
+  border-top-color: #162036 !important;
+  border-bottom-color: #162036 !important;
+}
+.maplibregl-popup-close-button,
+.mapboxgl-popup-close-button {
+  color: #8a97b0;
+}
+.maplibregl-popup-close-button:hover,
+.mapboxgl-popup-close-button:hover {
+  background: #22304d;
+  color: #e6edf7;
 }
 
 /* Cartões embutidos nas abas do painel lateral: sem moldura dupla */

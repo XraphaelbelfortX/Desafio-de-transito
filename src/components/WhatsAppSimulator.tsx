@@ -30,35 +30,35 @@ export const WhatsAppSimulator: React.FC<WhatsAppSimulatorProps> = ({
   return (
     <section
       aria-label="Simulador de Cidadão (WhatsApp)"
-      className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+      className="bg-gv-card rounded-xl border border-gv-border shadow-sm overflow-hidden"
     >
       {/* Barra superior do simulador de relatos */}
-      <div className={`text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 ${ativo ? 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-slate-900' : 'bg-slate-800'}`}>
+      <div className={`text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 ${ativo ? 'bg-gradient-to-r from-gv-green via-gv-green to-gv-bg' : 'bg-gv-panel'}`}>
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center">
-            <MessageSquarePlus className="w-4 h-4 text-emerald-300" />
+          <div className="w-7 h-7 rounded-lg bg-gv-green/20 border border-gv-green/40 flex items-center justify-center">
+            <MessageSquarePlus className="w-4 h-4 text-gv-green" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-xs sm:text-sm font-bold tracking-tight">
                 Simulador de Cidadão (WhatsApp)
               </h3>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/15 text-white border border-white/25">
                 Protótipo, sem integração com o WhatsApp ainda
               </span>
             </div>
-            <p className="text-[11px] text-emerald-100/80 hidden sm:block">
+            <p className="text-[11px] text-white/85 hidden sm:block">
               Simula o relato que a população mandaria pelo WhatsApp: o texto é classificado por palavras-chave e vira um ponto na mancha &ldquo;Relatos&rdquo;
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 text-[11px] bg-slate-950/40 px-2.5 py-1 rounded-lg border border-white/10">
-            <MessageSquare className="w-3.5 h-3.5 text-emerald-300" />
+          <div className="flex items-center gap-2 text-[11px] bg-gv-border/40 px-2.5 py-1 rounded-lg border border-white/10">
+            <MessageSquare className="w-3.5 h-3.5 text-gv-green" />
             <span>
               Relatos recebidos:{' '}
-              <strong className="text-emerald-300 font-mono">{totalReportsCount}</strong>
+              <strong className="text-gv-green font-mono">{totalReportsCount}</strong>
             </span>
           </div>
           <button
@@ -68,7 +68,7 @@ export const WhatsAppSimulator: React.FC<WhatsAppSimulatorProps> = ({
             className={`text-[11px] font-bold px-3 py-1.5 rounded-lg border ${
               ativo
                 ? 'bg-white/10 border-white/20 text-white hover:bg-white/20'
-                : 'bg-emerald-500 border-emerald-300 text-emerald-950 hover:bg-emerald-400'
+                : 'bg-gv-green border-gv-green text-gv-cyanink hover:brightness-110'
             }`}
           >
             {ativo ? 'Desligar relatos' : 'Ligar relatos'}
@@ -76,7 +76,7 @@ export const WhatsAppSimulator: React.FC<WhatsAppSimulatorProps> = ({
         </div>
       </div>
       {!ativo && (
-        <p className="px-4 py-2 text-[11px] text-slate-600 bg-slate-50 border-b border-slate-100">
+        <p className="px-4 py-2 text-[11px] text-gv-muted bg-gv-panel border-b border-gv-border">
           Relatos desligados. Nenhum ponto novo entra no mapa até você ligar de novo.
         </p>
       )}
@@ -85,8 +85,8 @@ export const WhatsAppSimulator: React.FC<WhatsAppSimulatorProps> = ({
       <form onSubmit={handleSubmit} className="p-3.5 sm:p-4 space-y-3">
         {/* Relatos de exemplo para a demonstração */}
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-semibold text-slate-500 mr-1 flex items-center gap-1">
-            <Mic className="w-3 h-3 text-emerald-600" />
+          <span className="text-[11px] font-semibold text-gv-muted mr-1 flex items-center gap-1">
+            <Mic className="w-3 h-3 text-gv-green" />
             Relatos de exemplo:
           </span>
           {CITIZEN_AUDIO_PRESETS.map((preset, idx) => (
@@ -95,7 +95,7 @@ export const WhatsAppSimulator: React.FC<WhatsAppSimulatorProps> = ({
               type="button"
               disabled={!ativo || isProcessing}
               onClick={() => setInputText(preset.replace(/[“”]/g, ''))}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300 transition truncate max-w-[230px]"
+              className="text-[11px] px-2.5 py-1 rounded-full bg-gv-bg hover:bg-gv-green/10 text-gv-ink hover:text-gv-green border border-gv-border hover:border-gv-green transition truncate max-w-[230px]"
               title={preset}
             >
               {preset.slice(1, 38)}…
@@ -109,7 +109,7 @@ export const WhatsAppSimulator: React.FC<WhatsAppSimulatorProps> = ({
             <label htmlFor="citizen-whatsapp-input" className="sr-only">
               Simule a mensagem de áudio transcrita do cidadão
             </label>
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-emerald-700 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-gv-green pointer-events-none">
               <Mic className="w-4 h-4" />
             </div>
             <input
@@ -119,14 +119,14 @@ export const WhatsAppSimulator: React.FC<WhatsAppSimulatorProps> = ({
               onChange={(e) => setInputText(e.target.value)}
               disabled={!ativo || isProcessing}
               placeholder="Simule a mensagem de áudio transcrita do cidadão"
-              className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm bg-emerald-50/40 border border-slate-300 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:bg-white transition"
+              className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm bg-gv-bg border border-gv-border rounded-xl text-gv-ink placeholder:text-gv-muted focus:outline-none focus:ring-2 focus:ring-gv-green focus:bg-gv-card transition"
             />
           </div>
 
           <button
             type="submit"
             disabled={!ativo || isProcessing || !inputText.trim()}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:text-slate-500 shadow-sm hover:shadow transition-all duration-150 shrink-0 cursor-pointer"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-gv-cyanink bg-gv-green hover:brightness-110 disabled:bg-gv-border disabled:text-gv-muted shadow-sm hover:shadow transition-all duration-150 shrink-0 cursor-pointer"
           >
             {isProcessing ? (
               <>
