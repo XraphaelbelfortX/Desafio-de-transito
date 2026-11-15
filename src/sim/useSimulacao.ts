@@ -68,9 +68,12 @@ export interface Simulacao {
   setModoColocar: (t: TipoIntervencao | null) => void;
   intervencaoSelecionada: string | null;
   selecionarIntervencao: (id: string | null) => void;
-  /** Sobe quando o mapa deve enquadrar a intervenção selecionada. */
+  /** Sobe quando o mapa deve enquadrar a intervenção selecionada ou um ponto. */
   focoTick: number;
+  /** Ponto do último pedido de foco. Nulo quando o foco é uma intervenção. */
+  focoPonto: { lng: number; lat: number } | null;
   focarIntervencao: (id: string) => void;
+  focarPonto: (lng: number, lat: number) => void;
   selecionadoId: number | null;
   selecionar: (id: number | null) => void;
   agente: AgenteVisao | null;
@@ -130,6 +133,7 @@ export function useSimulacao(): Simulacao {
   const [modoColocar, setModoColocar] = useState<TipoIntervencao | null>(null);
   const [intervencaoSelecionada, selecionarIntervencao] = useState<string | null>(null);
   const [focoTick, setFocoTick] = useState(0);
+  const [focoPonto, setFocoPonto] = useState<{ lng: number; lat: number } | null>(null);
   const [selecionadoId, setSelecionadoId] = useState<number | null>(null);
   const [agente, setAgente] = useState<AgenteVisao | null>(null);
   const rodandoRef = useRef(rodando);
@@ -164,6 +168,7 @@ export function useSimulacao(): Simulacao {
   useEffect(() => {
     if (!rede) return;
     let raf = 0;
+    let uiTimer = 0;
     let ultimo = performance.now();
     let ultimoUI = 0;
     let vistos = motorRef.current?.eventos.length ?? 0;
@@ -183,23 +188,33 @@ export function useSimulacao(): Simulacao {
         }
         if (pulsos.current.length > 60) pulsos.current.splice(0, pulsos.current.length - 60);
         ouvintes.current.forEach((fn) => fn());
+        // O painel não entra neste quadro: o redesenho do React ficava no mesmo
+        // frame do mapa e engasgava o play.
         if (agora - ultimoUI > 250) {
           ultimoUI = agora;
-          setHora(m.hora());
-          setMetricas(m.metricas());
-          setNAgentes(m.agentes.length);
+          const horaAgora = m.hora();
+          const met = m.metricas();
+          const nAg = m.agentes.length;
           const sel = selecionadoRef.current;
-          if (sel !== null) {
-            const a = m.agentes.find((g) => g.id === sel);
-            setAgente((ant) => (a ? visao(a, true) : ant ? { ...ant, naVia: false } : null));
-          }
+          const a = sel !== null ? m.agentes.find((g) => g.id === sel) : undefined;
+          const foto = a ? visao(a, true) : null;
+          window.clearTimeout(uiTimer);
+          uiTimer = window.setTimeout(() => {
+            setHora(horaAgora);
+            setMetricas(met);
+            setNAgentes(nAg);
+            if (sel !== null) setAgente((ant) => (foto ? foto : ant ? { ...ant, naVia: false } : null));
+          }, 0);
         }
       }
       ultimo = agora;
       raf = requestAnimationFrame(quadro);
     };
     raf = requestAnimationFrame(quadro);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(uiTimer);
+    };
   }, [rede]);
 
   // reconfigura o motor quando as intervenções mudam
@@ -270,12 +285,19 @@ export function useSimulacao(): Simulacao {
     const id = novoId(tipo);
     setIntervencoes((l) => [...l, { id, tipo, lng, lat, tempos: tipo === 'semaforo' ? { ...TEMPOS_PADRAO } : undefined }]);
     selecionarIntervencao(id);
+    setFocoPonto(null);
     setFocoTick((n) => n + 1);
     setModoColocar(null);
   }, []);
 
   const focarIntervencao = useCallback((id: string) => {
     selecionarIntervencao(id);
+    setFocoPonto(null);
+    setFocoTick((n) => n + 1);
+  }, []);
+
+  const focarPonto = useCallback((lng: number, lat: number) => {
+    setFocoPonto({ lng, lat });
     setFocoTick((n) => n + 1);
   }, []);
 
@@ -338,7 +360,9 @@ export function useSimulacao(): Simulacao {
     intervencaoSelecionada,
     selecionarIntervencao,
     focoTick,
+    focoPonto,
     focarIntervencao,
+    focarPonto,
     selecionadoId,
     selecionar,
     agente,

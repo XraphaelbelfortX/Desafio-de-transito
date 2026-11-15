@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BarChart3, MapPin, Minus, Plus, Save, Trash2, TrendingDown, TrendingUp, Upload } from 'lucide-react';
 import type { Metricas } from '../../sim/motor';
 import { DEFINICAO, TEMPOS_PADRAO, type TemposSemaforo, type TipoIntervencao } from '../../sim/intervencoes';
 import { formatarReais, type IdCenario, type Simulacao } from '../../sim/useSimulacao';
 import { orcarCenario, paraLocais, rodarCenario, totalConflitos, totalInfracoes } from '../../sim/cenarios';
 import { ComparacaoCenarios } from './ComparacaoCenarios';
+import { BlocoOrigem, explicarOrigem } from './OrigemNumeros';
 import { ALCANCE, COR_ZONA, tintaSobre } from './zonasIntervencao';
 
 export const COR_CENARIO: Record<'atual' | IdCenario, string> = {
@@ -147,6 +148,19 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
   const temFechado = sim.intervencoes.some((i) => i.tipo === 'fechar_canteiro' && sim.analises.get(i.id)?.valida);
   const temRetorno = sim.intervencoes.some((i) => i.tipo === 'retorno' && sim.analises.get(i.id)?.valida && !sim.analises.get(i.id)?.regulariza);
   const comparar = m && base && sim.intervencoes.length > 0 && minutos >= 10;
+  const origem = useMemo(() => {
+    if (!m || !rede || minutos < 10 || sim.intervencoes.length === 0) return null;
+    const motor = sim.motorRef.current;
+    if (!motor) return null;
+    return explicarOrigem({
+      rede,
+      metricas: m,
+      eventos: motor.eventos,
+      fluxo: motor.fluxoRetorno,
+      intervencoes: sim.intervencoes,
+      analises: sim.analises,
+    });
+  }, [m, rede, minutos, sim.intervencoes, sim.analises, sim.motorRef]);
   const ritmo = !sim.rodando
     ? 'A simulação está pausada.'
     : sim.velocidade === 1
@@ -268,8 +282,12 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
           <Etapa
             n={2}
             titulo="Veja o efeito"
-            dica={`${ritmo} Valores por hora, em ${num(minutos)} min simulados${minutos < 15 ? ' (amostra curta, espere um pouco)' : ''}.`}
-            feita={minutos >= 15}
+            dica={
+              minutos < 10
+                ? `${ritmo} Valores por hora, em ${num(minutos)} min simulados. A origem e o % vs hoje entram aos 10.`
+                : `${ritmo} Valores por hora, em ${num(minutos)} min simulados.`
+            }
+            feita={minutos >= 10}
           />
           {calculandoBase && (
             <p className="text-[11px] text-gv-muted bg-gv-panel border border-gv-border rounded-lg px-2.5 py-1.5 mb-2">
@@ -317,6 +335,15 @@ export const PainelIntervencoes: React.FC<Props> = ({ sim }) => {
               </div>
             ))}
           </dl>
+          {origem ? (
+            <BlocoOrigem linhas={origem} onPonto={sim.focarPonto} onIntervencao={sim.focarIntervencao} />
+          ) : (
+            <p role="status" aria-live="polite" className="mt-2 rounded-xl border border-gv-cyan/50 bg-gv-cyan/15 px-3 py-2.5 text-sm font-extrabold text-gv-ink leading-snug">
+              {minutos >= 10
+                ? '10 min simulados. A origem desses números entra quando houver uma intervenção no mapa.'
+                : `${Math.floor(minutos)} de 10 min simulados. A origem desses números entra aos 10.`}
+            </p>
+          )}
         </section>
 
         {/* Custo */}

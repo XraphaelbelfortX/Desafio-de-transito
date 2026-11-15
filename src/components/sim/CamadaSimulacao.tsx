@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Layer, Source, useMap } from 'react-map-gl';
-import type { GeoJSONSource, HeatmapLayerSpecification } from 'maplibre-gl';
+import type { GeoJSONSource, GeoJSONSourceDiff, HeatmapLayerSpecification } from 'maplibre-gl';
 import { paraGeo, type QuadroLocal } from '../../sim/geometria';
-import type { Agente, Evento } from '../../sim/motor';
+import type { Agente } from '../../sim/motor';
 import type { Simulacao } from '../../sim/useSimulacao';
 import type { Mancha } from './SeletorMancha';
 import { PALETA, rgba } from './paleta';
@@ -18,6 +18,7 @@ type Colecao = {
   type: 'FeatureCollection';
   features: {
     type: 'Feature';
+    id?: number;
     properties: Record<string, string | number | boolean>;
     geometry: { type: 'Point'; coordinates: [number, number] };
   }[];
@@ -51,17 +52,6 @@ const aproximar = (atual: number, alvo: number) => {
   const d = ((alvo - atual + 540) % 360) - 180;
   return (atual + d * 0.4 + 360) % 360;
 };
-
-const pontos = (q: QuadroLocal, eventos: Evento[], tipo: Evento['tipo']): Colecao => ({
-  type: 'FeatureCollection',
-  features: eventos
-    .filter((e) => e.tipo === tipo)
-    .map((e) => ({
-      type: 'Feature' as const,
-      properties: { peso: e.peso },
-      geometry: { type: 'Point' as const, coordinates: paraGeo(q, { x: e.x, y: e.y }) },
-    })),
-});
 
 const enviar = (mapa: { getSource: (id: string) => unknown }, id: string, dados: Colecao) => {
   const fonte = mapa.getSource(id) as GeoJSONSource | undefined;
@@ -112,6 +102,8 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
   const { current } = useMap();
   const selecionadoRef = useRef(sim.selecionadoId);
   selecionadoRef.current = sim.selecionadoId;
+  const manchaRef = useRef(mancha);
+  manchaRef.current = mancha;
   const memoria = useRef(new Map<number, Memoria>());
 
   useEffect(() => {
@@ -146,6 +138,33 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
     let ultimoCalor = 0;
     let conflitosAntes = -1;
     let infracoesAntes = -1;
+    let spritesProntos = mapa.hasImage('spr-carro');
+    let luzAssinatura = '';
+    let pulsoVazio = true;
+    let vistosCalor = 0;
+    let seqCalor = 1;
+    const acumConf: Colecao['features'] = [];
+    const acumInf: Colecao['features'] = [];
+    let enviadosConf = 0;
+    let enviadosInf = 0;
+    let manchaVista = manchaRef.current;
+    const veiculos: Colecao = { type: 'FeatureCollection', features: [] };
+    const pedestres: Colecao = { type: 'FeatureCollection', features: [] };
+    const pulsosGeo: Colecao = { type: 'FeatureCollection', features: [] };
+    const luzes: Colecao = { type: 'FeatureCollection', features: [] };
+
+    const reservar = (lista: Colecao['features'], n: number) => {
+      while (lista.length < n) {
+        lista.push({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [0, 0] } });
+      }
+      lista.length = n;
+    };
+    const porGeo = (coords: [number, number], x: number, y: number) => {
+      const xe = x * quadro.cos - y * quadro.sin;
+      const yn = x * quadro.sin + y * quadro.cos;
+      coords[0] = quadro.lon0 + xe / quadro.mLon;
+      coords[1] = quadro.lat0 + yn / quadro.mLat;
+    };
 
     const lembrar = (a: Agente, agora: number) => {
       const rotAlvo = bearingDe(quadro, a.ang);
@@ -174,15 +193,33 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
       return m;
     };
 
+    const publicarCalor = (id: string, todos: Colecao['features'], desde: number, reiniciar: boolean) => {
+      const fonte = mapa.getSource(id) as GeoJSONSource | undefined;
+      if (!fonte) return todos.length;
+      if (reiniciar || desde === 0) {
+        fonte.setData({ type: 'FeatureCollection', features: todos });
+        return todos.length;
+      }
+      const novos = todos.slice(desde);
+      if (!novos.length) return desde;
+      try {
+        fonte.updateData({ add: novos } as GeoJSONSourceDiff);
+        return todos.length;
+      } catch {
+        fonte.setData({ type: 'FeatureCollection', features: todos });
+        return todos.length;
+      }
+    };
+
     const desenhar = () => {
-      registrarSprites(mapa as never);
+      if (!spritesProntos) {
+        registrarSprites(mapa as never);
+        spritesProntos = mapa.hasImage('spr-carro');
+      }
       const motor = sim.motorRef.current;
       if (!motor) return;
       const agora = performance.now();
       const sel = selecionadoRef.current;
-      const veiculos: Colecao = { type: 'FeatureCollection', features: [] };
-      const pedestres: Colecao = { type: 'FeatureCollection', features: [] };
-      const alvos: Colecao = { type: 'FeatureCollection', features: [] };
       const vivos = new Set<number>();
 
       const eventos = motor.eventos;
@@ -194,6 +231,8 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
         if (e.tipo === 'conflito') for (const id of e.agentes) emConflito.add(id);
       }
       const pulsosVivos = sim.pulsos.current.filter((p) => agora - p.realT >= 0 && agora - p.realT < 1200);
+      let nVeic = 0;
+      let nPed = 0;
 
       for (const a of motor.agentes) {
         vivos.add(a.id);
@@ -203,16 +242,14 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
           const perto = pulsosVivos.some((p) => Math.hypot(p.x - a.x, p.y - a.y) < 5);
           if (a.infrator || a.ped?.correu) anelPed = 'vermelho';
           else if (emConflito.has(a.id) || perto) anelPed = 'laranja';
-          pedestres.features.push({
-            type: 'Feature',
-            properties: {
-              id: a.id,
-              rot: m.rot,
-              passo: Math.floor(m.dist / 0.65) % 3,
-              anel: anelPed,
-            },
-            geometry: { type: 'Point', coordinates: paraGeo(quadro, { x: a.x, y: a.y }) },
-          });
+          reservar(pedestres.features, nPed + 1);
+          const fp = pedestres.features[nPed];
+          fp.properties.id = a.id;
+          fp.properties.rot = m.rot;
+          fp.properties.passo = Math.floor(m.dist / 0.65) % 3;
+          fp.properties.anel = anelPed;
+          porGeo(fp.geometry.coordinates, a.x, a.y);
+          nPed++;
           continue;
         }
         const centro = {
@@ -220,62 +257,95 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
           y: a.y - (Math.sin(a.ang) * a.comp) / 2,
         };
         const pulso = a.infrator ? 0.4 + 0.6 * Math.abs(Math.sin(agora / 170)) : 0;
-        veiculos.features.push({
-          type: 'Feature',
-          properties: {
-            id: a.id,
-            tipo: a.tipo,
-            rot: m.rot,
-            freio: agora < m.freioAte ? 1 : 0,
-            pisca: m.pisca,
-            contorno: pulso,
-            selecao: a.id === sel ? 1 : 0,
-          },
-          geometry: { type: 'Point', coordinates: paraGeo(quadro, centro) },
-        });
-        alvos.features.push({
-          type: 'Feature',
-          properties: { id: a.id },
-          geometry: { type: 'Point', coordinates: paraGeo(quadro, centro) },
-        });
+        reservar(veiculos.features, nVeic + 1);
+        const fv = veiculos.features[nVeic];
+        fv.properties.id = a.id;
+        fv.properties.tipo = a.tipo;
+        fv.properties.rot = m.rot;
+        fv.properties.freio = agora < m.freioAte ? 1 : 0;
+        fv.properties.pisca = m.pisca;
+        fv.properties.contorno = pulso;
+        fv.properties.selecao = a.id === sel ? 1 : 0;
+        porGeo(fv.geometry.coordinates, centro.x, centro.y);
+        nVeic++;
       }
+      reservar(veiculos.features, nVeic);
+      reservar(pedestres.features, nPed);
       for (const id of memoria.current.keys()) if (!vivos.has(id)) memoria.current.delete(id);
 
-      const luzes: Colecao = {
-        type: 'FeatureCollection',
-        features: motor.luzes().map((l) => ({
-          type: 'Feature' as const,
-          properties: { cor: l.cor, rot: 0 },
-          geometry: { type: 'Point' as const, coordinates: paraGeo(quadro, { x: l.x, y: l.y }) },
-        })),
-      };
+      const listaLuzes = motor.luzes();
+      const assinatura = listaLuzes.map((l) => l.cor).join('');
+      if (assinatura !== luzAssinatura) {
+        luzAssinatura = assinatura;
+        reservar(luzes.features, listaLuzes.length);
+        listaLuzes.forEach((l, i) => {
+          const f = luzes.features[i];
+          f.properties.cor = l.cor;
+          f.properties.rot = 0;
+          porGeo(f.geometry.coordinates, l.x, l.y);
+        });
+        enviar(mapa, 'sim-luzes', luzes);
+      }
 
-      const pulsos: Colecao = { type: 'FeatureCollection', features: [] };
+      let nPulso = 0;
       for (const p of sim.pulsos.current) {
         const idade = agora - p.realT;
         if (idade < 0 || idade >= PULSO_MS) continue;
-        pulsos.features.push({
-          type: 'Feature',
-          properties: { t: idade / PULSO_MS, grave: p.grave },
-          geometry: { type: 'Point', coordinates: paraGeo(quadro, { x: p.x, y: p.y }) },
-        });
+        reservar(pulsosGeo.features, nPulso + 1);
+        const f = pulsosGeo.features[nPulso];
+        f.properties.t = idade / PULSO_MS;
+        f.properties.grave = p.grave;
+        porGeo(f.geometry.coordinates, p.x, p.y);
+        nPulso++;
       }
+      reservar(pulsosGeo.features, nPulso);
 
       enviar(mapa, 'sim-veiculos', veiculos);
-      enviar(mapa, 'sim-veiculos-alvo', alvos);
       enviar(mapa, 'sim-pedestres', pedestres);
-      enviar(mapa, 'sim-luzes', luzes);
-      enviar(mapa, 'sim-pulsos', pulsos);
+      if (nPulso > 0 || !pulsoVazio) {
+        pulsoVazio = nPulso === 0;
+        enviar(mapa, 'sim-pulsos', pulsosGeo);
+      }
 
-      if (agora - ultimoCalor > 500) {
+      if (manchaRef.current !== manchaVista) {
+        manchaVista = manchaRef.current;
+        ultimoCalor = 0;
+      }
+      if (agora - ultimoCalor > 1200) {
         ultimoCalor = agora;
-        const conflitos = pontos(quadro, eventos, 'conflito');
-        const infracoes = pontos(quadro, eventos, 'infracao');
-        enviar(mapa, 'sim-calor-conflitos', conflitos);
-        enviar(mapa, 'sim-calor-infracoes', infracoes);
-        if (conflitos.features.length !== conflitosAntes || infracoes.features.length !== infracoesAntes) {
-          conflitosAntes = conflitos.features.length;
-          infracoesAntes = infracoes.features.length;
+        const ev = eventos;
+        let reiniciar = false;
+        if (ev.length < vistosCalor) {
+          acumConf.length = 0;
+          acumInf.length = 0;
+          vistosCalor = 0;
+          enviadosConf = 0;
+          enviadosInf = 0;
+          reiniciar = true;
+        }
+        for (let i = vistosCalor; i < ev.length; i++) {
+          const e = ev[i];
+          if (e.tipo !== 'conflito' && e.tipo !== 'infracao') continue;
+          const f: Colecao['features'][number] = {
+            type: 'Feature',
+            id: seqCalor,
+            properties: { peso: e.peso, id: seqCalor },
+            geometry: { type: 'Point', coordinates: paraGeo(quadro, { x: e.x, y: e.y }) },
+          };
+          seqCalor++;
+          if (e.tipo === 'conflito') acumConf.push(f);
+          else acumInf.push(f);
+        }
+        vistosCalor = ev.length;
+        const qual = manchaRef.current;
+        if (qual === 'conflitos' && (reiniciar || acumConf.length !== enviadosConf)) {
+          enviadosConf = publicarCalor('sim-calor-conflitos', acumConf, enviadosConf, reiniciar);
+        } else if (qual === 'infracoes' && (reiniciar || acumInf.length !== enviadosInf)) {
+          enviadosInf = publicarCalor('sim-calor-infracoes', acumInf, enviadosInf, reiniciar);
+        }
+        if (acumConf.length !== conflitosAntes || acumInf.length !== infracoesAntes) {
+          conflitosAntes = acumConf.length;
+          infracoesAntes = acumInf.length;
           onPontos(conflitosAntes, infracoesAntes);
         }
       }
@@ -298,7 +368,7 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
 
   return (
     <>
-      <Source id="sim-calor-conflitos" type="geojson" data={VAZIO}>
+      <Source id="sim-calor-conflitos" type="geojson" data={VAZIO} promoteId="id">
         <Layer
           id="sim-calor-conflito"
           type="heatmap"
@@ -306,7 +376,7 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
           paint={pinturaCalor(rampa(PALETA.conflito, '#ea580c', '#c2410c'))}
         />
       </Source>
-      <Source id="sim-calor-infracoes" type="geojson" data={VAZIO}>
+      <Source id="sim-calor-infracoes" type="geojson" data={VAZIO} promoteId="id">
         <Layer
           id="sim-calor-infracao"
           type="heatmap"
@@ -320,35 +390,33 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
         <Layer
           id="sim-veiculos-freio"
           type="symbol"
+          filter={['==', ['get', 'freio'], 1]}
           layout={icone(['concat', 'spr-freio-', ['get', 'tipo']])}
-          paint={{ 'icon-opacity': ['get', 'freio'] }}
         />
         <Layer
           id="sim-veiculos-pisca"
           type="symbol"
+          filter={['!=', ['get', 'pisca'], 0]}
           layout={icone([
             'case',
             ['==', ['get', 'pisca'], -1],
             ['concat', 'spr-pisca-dir-', ['get', 'tipo']],
             ['concat', 'spr-pisca-esq-', ['get', 'tipo']],
           ])}
-          paint={{ 'icon-opacity': ['case', ['==', ['get', 'pisca'], 0], 0, 1] }}
         />
         <Layer
           id="sim-veiculos-contorno"
           type="symbol"
+          filter={['>', ['get', 'contorno'], 0]}
           layout={icone(['concat', 'spr-contorno-', ['get', 'tipo']])}
           paint={{ 'icon-opacity': ['get', 'contorno'] }}
         />
         <Layer
           id="sim-veiculos-anel"
           type="symbol"
+          filter={['==', ['get', 'selecao'], 1]}
           layout={icone(['concat', 'spr-anel-', ['get', 'tipo']])}
-          paint={{ 'icon-opacity': ['get', 'selecao'] }}
         />
-      </Source>
-
-      <Source id="sim-veiculos-alvo" type="geojson" data={VAZIO}>
         <Layer
           id="sim-veiculos-alvo"
           type="circle"
@@ -372,7 +440,7 @@ export const CamadaSimulacao: React.FC<Props> = ({ sim, mancha, onCamadas, onPon
             ],
             'icon-size': ['interpolate', ['linear'], ['zoom'], 15, 0.42, 17, 0.62, 19, 0.9],
           } as never}
-          paint={{ 'icon-opacity': ['case', ['==', ['get', 'anel'], ''], 0, 1] }}
+          filter={['!=', ['get', 'anel'], '']}
         />
         <Layer id="sim-pedestres" type="symbol" layout={pedestreIcone as never} />
       </Source>

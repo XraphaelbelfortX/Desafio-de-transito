@@ -126,7 +126,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   }, []);
 
   // Esc cancela a colocação ou a seleção. O foco do mapa só acontece quando o painel pede.
-  const { modoColocar, setModoColocar, focoTick, intervencaoSelecionada, selecionarIntervencao } = sim;
+  const { modoColocar, setModoColocar, focoTick, focoPonto, intervencaoSelecionada, selecionarIntervencao } = sim;
   useEffect(() => {
     if (!modoColocar && !intervencaoSelecionada) return;
     const esc = (e: KeyboardEvent) => {
@@ -140,6 +140,14 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
   useEffect(() => {
     if (!focoTick || !mapRef.current) return;
+    if (focoPonto) {
+      mapRef.current.easeTo({
+        center: [focoPonto.lng, focoPonto.lat],
+        zoom: Math.max(mapRef.current.getZoom(), 17.9),
+        duration: 650,
+      });
+      return;
+    }
     const id = sim.intervencaoSelecionada;
     const rede = sim.rede;
     if (!id || !rede) return;

@@ -59,7 +59,8 @@ const COMO_AJUDA: Record<TipoIntervencao, string> = {
 const num = (v: number) => Math.round(v).toLocaleString('pt-BR');
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
-function lugarDoEvento(rede: Rede, x: number): { id: string; nome: string; x: number; cruzamento?: 'vv' | 'norte' } {
+/** O mesmo recorte de lugar do assistente: cruzamento (40 m) ou trecho de 60 m da avenida. */
+export function lugarDoEvento(rede: Rede, x: number): { id: string; nome: string; x: number; cruzamento?: 'vv' | 'norte' } {
   for (const c of rede.cruzamentos) {
     if (Math.abs(x - c.x) <= 40) return { id: `cruz_${c.id}`, nome: c.id === 'vv' ? 'cruzamento da Vicente Venâncio' : 'cruzamento norte', x: c.x, cruzamento: c.id };
   }

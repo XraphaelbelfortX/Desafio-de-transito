@@ -126,8 +126,11 @@ export const LogComportamento: React.FC<{ sim: Simulacao }> = ({ sim }) => {
   useEffect(() => {
     let ultimo = 0;
     const desligar = sim.assinar(() => {
+      const agora = performance.now();
+      if (agora - ultimo < 400) return;
       const motor = sim.motorRef.current;
       if (!motor) return;
+      ultimo = agora;
       const hora = formatarHora(motor.hora());
       for (const a of motor.agentes) {
         for (const d of a.decisoes) {
@@ -154,9 +157,7 @@ export const LogComportamento: React.FC<{ sim: Simulacao }> = ({ sim }) => {
           });
         }
       }
-      const agora = performance.now();
-      if (!pendentes.current.length || agora - ultimo < 400) return;
-      ultimo = agora;
+      if (!pendentes.current.length) return;
       const lote = pendentes.current.splice(0, pendentes.current.length);
       const foto = { ...contagem.current };
       setDesde(foto);
