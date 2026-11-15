@@ -14,9 +14,8 @@ interface StreetViewModalProps {
 }
 
 export const StreetViewModal: React.FC<StreetViewModalProps> = ({ isOpen, onClose, incidents, intervencoesReais }) => {
-  // "Ver a rua" abre direto na realidade aumentada (Street View real); sem chave configurada,
-  // essa aba mostra a explicação de como ativar, em vez de cair direto na planta.
-  const [fonte, setFonte] = useState<'planta' | 'real'>('real');
+  // Abre na planta, onde dá para desenhar as intervenções; a foto real fica na outra aba.
+  const [fonte, setFonte] = useState<'planta' | 'real'>('planta');
 
   if (!isOpen) return null;
 
@@ -27,7 +26,7 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({ isOpen, onClos
       aria-modal="true"
       aria-labelledby="street-view-title"
     >
-      <div className="bg-gv-card rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl border border-gv-border animate-toast">
+      <div className="bg-gv-card rounded-2xl max-w-6xl w-full overflow-hidden shadow-2xl border border-gv-border animate-toast">
         {/* Header */}
         <div className="bg-gv-panel text-white px-6 py-4 flex items-center justify-between border-b border-gv-border">
           <div>
@@ -60,21 +59,21 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({ isOpen, onClos
             <div className="inline-flex rounded-lg p-0.5 bg-gv-border">
               <button
                 type="button"
+                onClick={() => setFonte('planta')}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                  fonte === 'planta' ? 'bg-gv-cyan text-gv-cyanink shadow-sm' : 'text-gv-muted hover:text-gv-ink'
+                }`}
+              >
+                Desenhar na planta (SMTT)
+              </button>
+              <button
+                type="button"
                 onClick={() => setFonte('real')}
                 className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
                   fonte === 'real' ? 'bg-gv-cyan text-gv-cyanink shadow-sm' : 'text-gv-muted hover:text-gv-ink'
                 }`}
               >
-                Street View real (Google)
-              </button>
-              <button
-                type="button"
-                onClick={() => setFonte('planta')}
-                className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
-                  fonte === 'planta' ? 'bg-gv-panel text-white shadow-sm' : 'text-gv-muted hover:text-gv-ink'
-                }`}
-              >
-                Planta oficial (SMTT)
+                Foto da rua (Street View)
               </button>
             </div>
           </div>
@@ -87,14 +86,14 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({ isOpen, onClos
         {fonte === 'real' ? (
           <StreetViewReal centro={INTERSECTION_CENTER} incidents={incidents} intervencoes={intervencoesReais} />
         ) : (
-          <PlantaOficial intervencoes={intervencoesReais} />
+          <PlantaOficial nSimulacao={intervencoesReais.length} />
         )}
 
         {/* Rodapé */}
         <div className="p-4 bg-gv-panel flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gv-muted">
             {fonte === 'planta'
-              ? 'Planta oficial da SMTT (projeto de sinalização). Para colocar ou mudar intervenções de verdade, use a aba Simular.'
+              ? 'Desenho em escala sobre a planta oficial da SMTT, para mostrar como fica. O efeito no risco se mede na aba Simular.'
               : 'Pins: cor da zona para cada intervenção real colocada, e a cor da severidade para cada relato.'}
           </p>
           <button
