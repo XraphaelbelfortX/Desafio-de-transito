@@ -20,13 +20,15 @@ import { Predios3DLayer } from './Predios3DLayer';
 import type { Simulacao } from '../sim/useSimulacao';
 import type { TipoIntervencao } from '../sim/intervencoes';
 import { paraGeo } from '../sim/geometria';
-import { CamadaIntervencoes, centroDaZona } from './sim/CamadaIntervencoes';
+import { CamadaIntervencoes, centroDaZona, definirPrevia } from './sim/CamadaIntervencoes';
 import { CAMADAS_AGENTES, CamadaSimulacao } from './sim/CamadaSimulacao';
 import { ControlesTempo } from './sim/ControlesTempo';
 import { MarcadoresSugestao, type Assistente } from './sim/Sugestoes';
 import { PainelAgente } from './sim/PainelAgente';
 import { SeletorMancha, type Mancha } from './sim/SeletorMancha';
-import { MIME_INTERVENCAO } from './sim/PainelIntervencoes';
+import { lerTipoArraste, MIME_INTERVENCAO } from './sim/PainelIntervencoes';
+import { rgba, PALETA } from './sim/paleta';
+import { RegistrarSprites } from './sim/sprites';
 
 /** Rumo aproximado da Av. dos Africanos (graus, sentido horário a partir do norte). */
 const RUMO_AFRICANOS = 122;
@@ -104,13 +106,14 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 }) => {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [customToken] = useState<string>(MAPBOX_TOKEN);
-  const [showRede, setShowRede] = useState(!compacto);
+  const [showRede, setShowRede] = useState(true);
   const [feicaoRede, setFeicaoRede] = useState<FeicaoRede | null>(null);
 
   // Estados da Visão 3D Interativa
   const [is3DMode, setIs3DMode] = useState<boolean>(!compacto);
   const [predios3D, setPredios3D] = useState<boolean>(true);
   const mapRef = useRef<MapRef>(null);
+  const quadroPrev = useRef(0);
   const [soltando, setSoltando] = useState(false);
   const [mancha, setMancha] = useState<Mancha>(compacto ? 'relatos' : 'conflitos');
   const [pontosSim, setPontosSim] = useState({ conflitos: 0, infracoes: 0 });
@@ -245,6 +248,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     const tipo = e.dataTransfer.getData(MIME_INTERVENCAO) as TipoIntervencao;
     setSoltando(false);
+    definirPrevia(null);
     if (!tipo || !mapRef.current) return;
     e.preventDefault();
     const r = e.currentTarget.getBoundingClientRect();
@@ -305,17 +309,13 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           ['linear'],
           ['heatmap-density'],
           0,
-          'rgba(37, 99, 235, 0)',
-          0.18,
-          'rgba(59, 130, 246, 0.48)',
-          0.38,
-          'rgba(250, 204, 21, 0.82)',
-          0.62,
-          'rgba(249, 115, 22, 0.92)',
-          0.82,
-          'rgba(239, 68, 68, 0.97)',
+          rgba(PALETA.relatos, 0),
+          0.2,
+          rgba(PALETA.relatos, 0.45),
+          0.55,
+          'rgba(71, 85, 105, 0.72)',
           1,
-          'rgba(153, 27, 27, 1)',
+          'rgba(51, 65, 85, 0.9)',
         ],
         'heatmap-radius': [
           'interpolate',
@@ -363,8 +363,21 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         e.preventDefault();
         e.dataTransfer.dropEffect = 'copy';
         setSoltando(true);
+        const tipo = lerTipoArraste();
+        if (!tipo || !mapRef.current) return;
+        const agora = performance.now();
+        if (agora - quadroPrev.current < 40) return;
+        quadroPrev.current = agora;
+        const r = e.currentTarget.getBoundingClientRect();
+        const p = mapRef.current.unproject([e.clientX - r.left, e.clientY - r.top]);
+        definirPrevia({ tipo, lng: p.lng, lat: p.lat, origem: 'painel' });
       }}
-      onDragLeave={() => setSoltando(false)}
+      onDragLeave={(e) => {
+        const prox = e.relatedTarget;
+        if (prox instanceof Node && e.currentTarget.contains(prox)) return;
+        setSoltando(false);
+        definirPrevia(null);
+      }}
       onDrop={handleDrop}
     >
       <Map
@@ -388,6 +401,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         style={{ width: '100%', height: '100%' }}
         attributionControl={true}
       >
+        <RegistrarSprites />
         {/* Prédios 3D do OpenStreetMap (só na visão 3D) */}
         <Predios3DLayer visible={is3DMode && predios3D} />
 

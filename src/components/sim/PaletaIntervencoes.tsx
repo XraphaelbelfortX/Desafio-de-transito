@@ -2,10 +2,11 @@ import React from 'react';
 import { MousePointerClick } from 'lucide-react';
 import { CATALOGO, DEFINICAO, type TipoIntervencao } from '../../sim/intervencoes';
 import type { Simulacao } from '../../sim/useSimulacao';
+import { definirPrevia } from './CamadaIntervencoes';
 import { IconeIntervencao } from './IconeIntervencao';
 import { CartaoSugestoes, type Assistente } from './Sugestoes';
 import { ALCANCE, GRUPOS } from './zonasIntervencao';
-import { Etapa, MIME_INTERVENCAO } from './PainelIntervencoes';
+import { anunciarArraste, Etapa, MIME_INTERVENCAO } from './PainelIntervencoes';
 
 interface Props {
   sim: Simulacao;
@@ -18,9 +19,14 @@ interface Props {
  */
 export const PaletaIntervencoes: React.FC<Props> = ({ sim, assistente }) => {
   const iniciarArraste = (e: React.DragEvent, tipo: TipoIntervencao) => {
+    anunciarArraste(tipo);
     e.dataTransfer.setData(MIME_INTERVENCAO, tipo);
     e.dataTransfer.setData('text/plain', DEFINICAO[tipo].nome);
     e.dataTransfer.effectAllowed = 'copy';
+  };
+  const encerrarArraste = () => {
+    anunciarArraste(null);
+    definirPrevia(null);
   };
 
   return (
@@ -42,6 +48,7 @@ export const PaletaIntervencoes: React.FC<Props> = ({ sim, assistente }) => {
                     type="button"
                     draggable
                     onDragStart={(e) => iniciarArraste(e, d.tipo)}
+                    onDragEnd={encerrarArraste}
                     onClick={() => sim.setModoColocar(ativo ? null : d.tipo)}
                     aria-pressed={ativo}
                     title={`${d.resumo} ${ALCANCE[d.tipo]}. ${d.ondeSoltar}`}

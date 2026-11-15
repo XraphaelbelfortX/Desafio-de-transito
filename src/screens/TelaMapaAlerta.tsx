@@ -29,8 +29,7 @@ export const TelaMapaAlerta: React.FC<Props> = ({ sim, assistente, incidents, la
 
   const nCiclista = incidents.filter((i) => /ciclista|bicicleta/i.test(i.tipo)).length;
   const risco = sim.metricas?.risco;
-  const riscoRotulo = risco === undefined ? '—' : risco >= 15 ? 'Crítico' : risco >= 7 ? 'Moderado' : 'Baixo';
-  const riscoCor = risco === undefined ? 'cyan' : risco >= 15 ? 'red' : risco >= 7 ? 'amber' : 'green';
+  const riscoValor = risco === undefined ? '—' : risco.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -47,8 +46,8 @@ export const TelaMapaAlerta: React.FC<Props> = ({ sim, assistente, incidents, la
       <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden flex flex-col gap-3 p-3">
         <div className="flex flex-wrap gap-3 shrink-0">
           <KpiCard rotulo="Relatos recebidos" valor={String(incidents.length)} variacao="via WhatsApp" corVariacao="cyan" />
-          <KpiCard rotulo="Quase-acidentes carro × ciclista" valor={String(nCiclista)} variacao={nCiclista > 0 ? `${nCiclista} no período` : 'nenhum registrado'} corVariacao={nCiclista > 0 ? 'amber' : 'green'} />
-          <KpiCard rotulo="Índice de risco do cruzamento" valor={risco === undefined ? '—' : risco.toFixed(0)} variacao={riscoRotulo} corVariacao={riscoCor} />
+          <KpiCard rotulo="Relatos de carro × ciclista" valor={String(nCiclista)} variacao={nCiclista > 0 ? `${nCiclista} ${nCiclista === 1 ? 'relato' : 'relatos'} no WhatsApp` : 'nenhum relato'} corVariacao={nCiclista > 0 ? 'amber' : 'green'} />
+          <KpiCard rotulo="Índice de risco por hora" valor={riscoValor} variacao="ocorrências por hora" corVariacao="cyan" />
           <KpiCard rotulo="Intervenções no mapa" valor={String(sim.intervencoes.length)} variacao={sim.intervencoes.length > 0 ? 'rodando na simulação' : 'cruzamento como está hoje'} corVariacao="cyan" />
         </div>
 

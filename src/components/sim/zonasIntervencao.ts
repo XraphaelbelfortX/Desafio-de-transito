@@ -1,30 +1,21 @@
 import type { Categoria, TipoIntervencao } from '../../sim/intervencoes';
+import { PALETA } from './paleta';
 
-/** Cor da mancha no mapa. A mesma cor pinta o número na lista. */
+/** A mancha é sempre azul. O glifo é que diz o tipo. */
 export const COR_ZONA: Record<TipoIntervencao, string> = {
-  camera: '#2563eb',
-  agente: '#4f46e5',
-  semaforo: '#f59e0b',
-  fechar_canteiro: '#22c55e',
-  retorno: '#2dd4bf',
-  tachoes: '#eab308',
-  faixa_elevada: '#f8fafc',
-  refugio: '#cbd5e1',
-  lombada: '#facc15',
+  camera: PALETA.intervencao,
+  agente: PALETA.intervencao,
+  semaforo: PALETA.intervencao,
+  fechar_canteiro: PALETA.intervencao,
+  retorno: PALETA.intervencao,
+  tachoes: PALETA.intervencao,
+  faixa_elevada: PALETA.intervencao,
+  refugio: PALETA.intervencao,
+  lombada: PALETA.intervencao,
 };
 
-const CLARAS = new Set<TipoIntervencao>([
-  'semaforo',
-  'fechar_canteiro',
-  'retorno',
-  'tachoes',
-  'faixa_elevada',
-  'refugio',
-  'lombada',
-]);
-
-/** Texto legível sobre a cor da zona. */
-export const tintaSobre = (tipo: TipoIntervencao) => (CLARAS.has(tipo) ? '#0f172a' : '#ffffff');
+/** Texto legível sobre a mancha azul. */
+export const tintaSobre = (_tipo: TipoIntervencao) => '#ffffff';
 
 export const ROTULO_CURTO: Record<TipoIntervencao, string> = {
   camera: 'Câmera',

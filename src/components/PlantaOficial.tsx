@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ExternalLink, Minus, Plus, RotateCw, Trash2, MousePointerClick } from 'lucide-react';
 import { CATALOGO, type TipoIntervencao } from '../sim/intervencoes';
 import { IconeIntervencao } from './sim/IconeIntervencao';
+import { PALETA } from './sim/paleta';
 import { COR_ZONA } from './sim/zonasIntervencao';
 
 // Folha da planta: 3402 × 1684 pt (1200 × 594 mm) na escala 1:500 → 600 × 297 m de terreno.
@@ -18,53 +19,18 @@ interface Estilo {
   /** tamanho inicial em metros: [ao longo da avenida, atravessando] */
   m: [number, number];
   rotulo: string;
-  fundo?: (girado: boolean) => string;
-  borda?: string;
-  tracejada?: boolean;
 }
 
+/** Mesma mancha azul translúcida do mapa. O ícone é que distingue o tipo. */
+const MANCHA = 'rgba(37, 99, 235, 0.34)';
+
 const ESTILO: Record<TipoIntervencao, Estilo> = {
-  fechar_canteiro: {
-    forma: 'area',
-    m: [20, 3],
-    rotulo: 'Canteiro ampliado',
-    fundo: () => 'repeating-linear-gradient(45deg,#3f8f5a 0 5px,#2f7447 5px 10px)',
-    borda: '#1f5c36',
-  },
-  tachoes: {
-    forma: 'area',
-    m: [30, 1.2],
-    rotulo: 'Linha de tachões',
-    fundo: (g) => `repeating-linear-gradient(${g ? 0 : 90}deg,#facc15 0 6px,transparent 6px 13px)`,
-  },
-  faixa_elevada: {
-    forma: 'area',
-    m: [4, 14],
-    rotulo: 'Faixa elevada',
-    fundo: (g) => `repeating-linear-gradient(${g ? 90 : 0}deg,#ffffff 0 4px,#c2410c 4px 8px)`,
-    borda: '#7c2d12',
-  },
-  lombada: {
-    forma: 'area',
-    m: [1.5, 7],
-    rotulo: 'Lombada',
-    fundo: () => 'repeating-linear-gradient(45deg,#facc15 0 4px,#111827 4px 8px)',
-  },
-  refugio: {
-    forma: 'area',
-    m: [6, 2.5],
-    rotulo: 'Refúgio de pedestre',
-    fundo: () => '#9ca3af',
-    borda: '#f8fafc',
-  },
-  retorno: {
-    forma: 'area',
-    m: [10, 6],
-    rotulo: 'Retorno',
-    fundo: () => 'rgba(45,212,191,0.28)',
-    borda: '#2dd4bf',
-    tracejada: true,
-  },
+  fechar_canteiro: { forma: 'area', m: [20, 3], rotulo: 'Canteiro ampliado' },
+  tachoes: { forma: 'area', m: [30, 1.2], rotulo: 'Linha de tachões' },
+  faixa_elevada: { forma: 'area', m: [4, 14], rotulo: 'Faixa elevada' },
+  lombada: { forma: 'area', m: [1.5, 7], rotulo: 'Lombada' },
+  refugio: { forma: 'area', m: [6, 2.5], rotulo: 'Refúgio de pedestre' },
+  retorno: { forma: 'area', m: [10, 6], rotulo: 'Retorno' },
   camera: { forma: 'ponto', m: [0, 0], rotulo: 'Câmera' },
   semaforo: { forma: 'ponto', m: [0, 0], rotulo: 'Semáforo' },
   agente: { forma: 'ponto', m: [0, 0], rotulo: 'Agente' },
@@ -385,8 +351,8 @@ export const PlantaOficial: React.FC<Props> = ({ nSimulacao }) => {
                     height: `${i.h}%`,
                     minWidth: 6,
                     minHeight: 6,
-                    background: est.fundo?.(i.girado),
-                    border: est.borda ? `2px ${est.tracejada ? 'dashed' : 'solid'} ${est.borda}` : undefined,
+                    background: MANCHA,
+                    border: `2px solid ${PALETA.intervencao}`,
                     outline: selecionado ? '2px solid #22d3ee' : undefined,
                     outlineOffset: 2,
                     boxShadow: '0 1px 3px rgba(0,0,0,0.35)',
@@ -397,6 +363,9 @@ export const PlantaOficial: React.FC<Props> = ({ nSimulacao }) => {
                   onClick={(e) => e.stopPropagation()}
                   title={`${est.rotulo} · ${fmt(m.w)} × ${fmt(m.h)} m`}
                 >
+                  <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <IconeIntervencao tipo={i.tipo} tamanho={20} />
+                  </span>
                   {selecionado && (
                     <>
                       <div className="absolute left-0 -top-8 flex items-center gap-1 whitespace-nowrap bg-gv-bg text-white text-[11px] font-semibold rounded-md px-1.5 py-1 shadow">
