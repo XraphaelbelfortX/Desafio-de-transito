@@ -37,7 +37,7 @@ export const TelaMapaAlerta: React.FC<Props> = ({ sim, assistente, incidents, la
       <header className="shrink-0 px-5 py-3 flex flex-wrap items-center justify-between gap-3 border-b border-gv-border">
         <div>
           <h1 className="text-lg font-bold text-gv-ink leading-tight">Mapa de Alerta · São Luís</h1>
-          <p className="text-xs text-gv-muted">SMTT · Coordenação de Engenharia de Tráfego</p>
+          <p className="text-xs text-gv-muted">Visão geral, sem mexer em nada. Pra testar uma intervenção, use a aba Simular.</p>
         </div>
         <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gv-cyan/15 border border-gv-cyan/40 text-gv-cyan">
           Av. dos Africanos × Vicente Venâncio
@@ -54,7 +54,7 @@ export const TelaMapaAlerta: React.FC<Props> = ({ sim, assistente, incidents, la
 
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-3">
           <div className="flex-1 min-w-0 min-h-[420px] lg:min-h-0">
-            <TacticalMap incidents={incidents} onOpenStreetView={onOpenStreetView} latestIncidentId={latestIncidentId} sim={sim} relatosAtivos={relatosAtivos} assistente={assistente} />
+            <TacticalMap incidents={incidents} onOpenStreetView={onOpenStreetView} latestIncidentId={latestIncidentId} sim={sim} relatosAtivos={relatosAtivos} assistente={assistente} compacto />
           </div>
 
           <aside className="w-full lg:w-[360px] shrink-0 bg-gv-panel border border-gv-border rounded-xl p-4 flex flex-col gap-3 lg:min-h-0 max-h-[60vh] lg:max-h-none overflow-y-auto">

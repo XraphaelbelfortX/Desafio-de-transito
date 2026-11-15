@@ -89,6 +89,8 @@ interface TacticalMapProps {
   sim: Simulacao;
   relatosAtivos: boolean;
   assistente?: Assistente;
+  /** Visão geral (aba Mapa): mapa só pra olhar, sem os controles de rodar/editar a simulação. */
+  compacto?: boolean;
 }
 
 export const TacticalMap: React.FC<TacticalMapProps> = ({
@@ -98,18 +100,19 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   sim,
   relatosAtivos,
   assistente,
+  compacto = false,
 }) => {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [customToken] = useState<string>(MAPBOX_TOKEN);
-  const [showRede, setShowRede] = useState(true);
+  const [showRede, setShowRede] = useState(!compacto);
   const [feicaoRede, setFeicaoRede] = useState<FeicaoRede | null>(null);
 
   // Estados da Visão 3D Interativa
-  const [is3DMode, setIs3DMode] = useState<boolean>(true);
+  const [is3DMode, setIs3DMode] = useState<boolean>(!compacto);
   const [predios3D, setPredios3D] = useState<boolean>(true);
   const mapRef = useRef<MapRef>(null);
   const [soltando, setSoltando] = useState(false);
-  const [mancha, setMancha] = useState<Mancha>('conflitos');
+  const [mancha, setMancha] = useState<Mancha>(compacto ? 'relatos' : 'conflitos');
   const [pontosSim, setPontosSim] = useState({ conflitos: 0, infracoes: 0 });
   const aoPontos = useCallback((conflitos: number, infracoes: number) => {
     setPontosSim((atual) => (atual.conflitos === conflitos && atual.infracoes === infracoes ? atual : { conflitos, infracoes }));
@@ -154,8 +157,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     latitude: INTERSECTION_CENTER.lat,
     longitude: INTERSECTION_CENTER.lng,
     zoom: INTERSECTION_CENTER.zoom,
-    pitch: 60,
-    bearing: -25,
+    pitch: compacto ? 0 : 60,
+    bearing: compacto ? 0 : -25,
   });
 
   // Garante que se INTERSECTION_CENTER atualizar via HMR, a câmera foca no único mapa de calor correto
@@ -548,44 +551,50 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         </div>
       )}
 
-      {/* Controles de câmera no estilo Google Earth */}
-      <CameraControls3D
-        mapRef={mapRef}
-        centro={{ lat: INTERSECTION_CENTER.lat, lng: INTERSECTION_CENTER.lng }}
-        bearing={viewState.bearing}
-        pitch={viewState.pitch}
-        is3D={is3DMode}
-        onToggle3D={handleToggle3DMode}
-        predios3D={predios3D}
-        onTogglePredios={() => setPredios3D((v) => !v)}
-        vistas={VISTAS}
-      />
+      {/* Controles de câmera no estilo Google Earth — só na mesa de simulação, não na visão geral */}
+      {!compacto && (
+        <CameraControls3D
+          mapRef={mapRef}
+          centro={{ lat: INTERSECTION_CENTER.lat, lng: INTERSECTION_CENTER.lng }}
+          bearing={viewState.bearing}
+          pitch={viewState.pitch}
+          is3D={is3DMode}
+          onToggle3D={handleToggle3DMode}
+          predios3D={predios3D}
+          onTogglePredios={() => setPredios3D((v) => !v)}
+          vistas={VISTAS}
+        />
+      )}
 
       {/* Barra do mapa (canto superior direito): vista, rua, centralizar e rede de faixas */}
       <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-gv-bg/85 backdrop-blur-md border border-gv-border/80 rounded-xl p-1 shadow-lg">
-        <button
-          type="button"
-          onClick={handleToggle3DMode}
-          aria-pressed={is3DMode}
-          title={is3DMode ? 'Voltar para a vista de cima (2D)' : 'Ver em 3D'}
-          className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition ${is3DMode ? 'bg-gv-amber text-gv-cyanink' : 'text-gv-ink hover:bg-white/10'}`}
-        >
-          <Box className="w-4 h-4" />
-          {is3DMode ? '3D' : '2D'}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setShowRede((prev) => !prev);
-            setFeicaoRede(null);
-          }}
-          aria-pressed={showRede}
-          title="Mostrar/ocultar a rede de faixas"
-          className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition ${showRede ? 'bg-gv-cyan text-gv-cyanink' : 'text-gv-ink hover:bg-white/10'}`}
-        >
-          <Layers className="w-4 h-4" />
-          Faixas
-        </button>
+        {!compacto && (
+          <>
+            <button
+              type="button"
+              onClick={handleToggle3DMode}
+              aria-pressed={is3DMode}
+              title={is3DMode ? 'Voltar para a vista de cima (2D)' : 'Ver em 3D'}
+              className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition ${is3DMode ? 'bg-gv-amber text-gv-cyanink' : 'text-gv-ink hover:bg-white/10'}`}
+            >
+              <Box className="w-4 h-4" />
+              {is3DMode ? '3D' : '2D'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowRede((prev) => !prev);
+                setFeicaoRede(null);
+              }}
+              aria-pressed={showRede}
+              title="Mostrar/ocultar a rede de faixas"
+              className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition ${showRede ? 'bg-gv-cyan text-gv-cyanink' : 'text-gv-ink hover:bg-white/10'}`}
+            >
+              <Layers className="w-4 h-4" />
+              Faixas
+            </button>
+          </>
+        )}
         <button
           type="button"
           onClick={handleRecenter}
@@ -606,19 +615,21 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         </button>
       </div>
 
-      {/* Mancha, legenda e controles de tempo no canto inferior esquerdo */}
-      <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-2 items-start max-w-[min(100%-5.5rem,440px)]">
-        <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} rodando={sim.rodando} pontosSim={pontosSim} relatosAtivos={relatosAtivos} />
-        <ControlesTempo
-          rodando={sim.rodando}
-          onRodando={sim.setRodando}
-          velocidade={sim.velocidade}
-          onVelocidade={sim.setVelocidade}
-          hora={sim.hora}
-          onHora={sim.definirHora}
-          onReiniciar={sim.reiniciar}
-        />
-      </div>
+      {/* Mancha, legenda e controles de tempo no canto inferior esquerdo — só na mesa de simulação */}
+      {!compacto && (
+        <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-2 items-start max-w-[min(100%-5.5rem,440px)]">
+          <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} rodando={sim.rodando} pontosSim={pontosSim} relatosAtivos={relatosAtivos} />
+          <ControlesTempo
+            rodando={sim.rodando}
+            onRodando={sim.setRodando}
+            velocidade={sim.velocidade}
+            onVelocidade={sim.setVelocidade}
+            hora={sim.hora}
+            onHora={sim.definirHora}
+            onReiniciar={sim.reiniciar}
+          />
+        </div>
+      )}
     </div>
   );
 };

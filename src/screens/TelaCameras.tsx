@@ -2,12 +2,12 @@ import React from 'react';
 import { ShieldCheck } from 'lucide-react';
 import type { Tela } from '../components/shell/NavRail';
 
-type TipoDeteccao = 'carro' | 'pesado' | 'ciclista' | 'pedestre';
+type TipoDeteccao = 'carro' | 'pesado' | 'moto' | 'pedestre';
 
 const COR: Record<TipoDeteccao, string> = {
   carro: '#22d3ee',
   pesado: '#a78bfa',
-  ciclista: '#facc15',
+  moto: '#fb923c',
   pedestre: '#4ade80',
 };
 
@@ -16,38 +16,29 @@ interface Deteccao {
   tipo: TipoDeteccao;
   pct: number;
   risco?: boolean;
-  /** posição em % do quadro (1088×612) */
+  /** posição em % do quadro real da câmera (foto do próprio cruzamento) */
   x: number;
   y: number;
   w: number;
   h: number;
 }
 
-// Coordenadas extraídas 1:1 do protótipo Figma (quadro de 1088×612), convertidas para %.
+// Coordenadas calibradas na foto real do cruzamento (Google Street View, Av. dos Africanos
+// com Av. Vicente Venâncio) — a mesma cena que aparece na aba Mapa.
 const DETECCOES: Deteccao[] = [
-  { id: 103, tipo: 'carro', pct: 48, x: 46.93, y: 6.57, w: 1.35, h: 4.07 },
-  { id: 102, tipo: 'pesado', pct: 62, x: 47.55, y: 4.44, w: 3.28, h: 12.41 },
-  { id: 104, tipo: 'pesado', pct: 69, x: 42.71, y: 13.43, w: 3.49, h: 6.94 },
-  { id: 105, tipo: 'carro', pct: 63, x: 46.67, y: 17.78, w: 1.82, h: 4.81 },
-  { id: 106, tipo: 'carro', pct: 63, x: 51.25, y: 18.7, w: 2.03, h: 4.07 },
-  { id: 107, tipo: 'carro', pct: 80, x: 11.25, y: 22.13, w: 3.44, h: 3.06 },
-  { id: 108, tipo: 'ciclista', pct: 25, risco: true, x: 24.9, y: 28.52, w: 1.04, h: 2.69 },
-  { id: 109, tipo: 'carro', pct: 82, x: 32.55, y: 29.44, w: 3.8, h: 3.7 },
-  { id: 110, tipo: 'carro', pct: 87, x: 22.71, y: 36.39, w: 4.06, h: 4.54 },
-  { id: 111, tipo: 'pesado', pct: 87, risco: true, x: 27.24, y: 38.61, w: 9.43, h: 14.81 },
-  { id: 112, tipo: 'carro', pct: 83, x: 21.51, y: 39.72, w: 4.17, h: 5.18 },
-  { id: 113, tipo: 'pedestre', pct: 27, x: 48.49, y: 54.35, w: 0.74, h: 2.04 },
-  { id: 114, tipo: 'ciclista', pct: 48, x: 62.24, y: 57.31, w: 2.24, h: 4.35 },
-  { id: 115, tipo: 'carro', pct: 69, x: 41.2, y: 73.33, w: 5.16, h: 11.02 },
-  { id: 116, tipo: 'ciclista', pct: 33, x: 7.03, y: 81.11, w: 2.6, h: 4.81 },
-  { id: 117, tipo: 'carro', pct: 86, x: 45.0, y: 82.59, w: 4.84, h: 10.74 },
-  { id: 118, tipo: 'carro', pct: 51, x: 37.97, y: 89.07, w: 4.06, h: 6.02 },
+  { id: 101, tipo: 'carro', pct: 83, x: 28.7, y: 33.7, w: 9.2, h: 9.9 },
+  { id: 102, tipo: 'pesado', pct: 74, x: 0, y: 36.2, w: 5.1, h: 16.2 },
+  { id: 103, tipo: 'carro', pct: 91, risco: true, x: 42.7, y: 35.5, w: 8.3, h: 20.4 },
+  { id: 104, tipo: 'moto', pct: 88, risco: true, x: 62.5, y: 41.1, w: 13.4, h: 27.2 },
+  { id: 105, tipo: 'moto', pct: 85, risco: true, x: 78.9, y: 46.1, w: 12.1, h: 28.5 },
+  { id: 106, tipo: 'pedestre', pct: 41, x: 77.1, y: 27.0, w: 1.7, h: 12.9 },
+  { id: 107, tipo: 'moto', pct: 62, x: 95.6, y: 67.2, w: 4.4, h: 21.4 },
 ];
 
 const CONTADORES: { rotulo: string; tipo: TipoDeteccao; valor: number }[] = [
   { rotulo: 'Carros', tipo: 'carro', valor: DETECCOES.filter((d) => d.tipo === 'carro').length },
   { rotulo: 'Pesados', tipo: 'pesado', valor: DETECCOES.filter((d) => d.tipo === 'pesado').length },
-  { rotulo: 'Ciclistas', tipo: 'ciclista', valor: DETECCOES.filter((d) => d.tipo === 'ciclista').length },
+  { rotulo: 'Motos', tipo: 'moto', valor: DETECCOES.filter((d) => d.tipo === 'moto').length },
   { rotulo: 'Pedestres', tipo: 'pedestre', valor: DETECCOES.filter((d) => d.tipo === 'pedestre').length },
 ];
 
@@ -97,10 +88,14 @@ export const TelaCameras: React.FC<Props> = ({ onNavegar }) => (
     <div className="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden flex flex-col gap-3 p-3">
       <div className="flex-1 min-h-0 flex flex-col xl:flex-row gap-3">
         <div className="flex-1 min-w-0 flex flex-col gap-3">
-          <div className="relative w-full flex-1 min-h-[360px] rounded-xl overflow-hidden border border-gv-border bg-black" style={{ aspectRatio: '1088 / 612' }}>
-            <img src="/img/cam01-frame.png" alt="Quadro ilustrativo da câmera CAM-01 (a substituir por stream RTSP/HLS real)" className="absolute inset-0 w-full h-full object-cover" />
-            <img src="/img/cam01-roi.svg" alt="" aria-hidden="true" className="absolute inset-0 w-full h-full" />
-            <img src="/img/cam01-vetor-conflito.svg" alt="" aria-hidden="true" className="absolute inset-0 w-full h-full" />
+          <div className="relative w-full flex-1 min-h-[360px] rounded-xl overflow-hidden border border-gv-border bg-black" style={{ aspectRatio: '1872 / 677' }}>
+            <img src="/img/cam01-real.png" alt="Foto real do cruzamento (Google Street View), usada aqui como quadro da câmera CAM-01" className="absolute inset-0 w-full h-full object-cover" />
+
+            {/* Zona de conflito: onde o carro #103 cruza a frente das motos #104/#105 */}
+            <div
+              className="absolute rounded-lg border-2 border-dashed border-gv-red/70"
+              style={{ left: '40%', top: '34%', width: '53%', height: '43%' }}
+            />
 
             {DETECCOES.map((d) => (
               <div
@@ -117,23 +112,19 @@ export const TelaCameras: React.FC<Props> = ({ onNavegar }) => (
               </div>
             ))}
 
-            <div className="absolute px-2 py-1 rounded bg-black/65 text-gv-red text-[11px] font-semibold" style={{ left: '20.8%', top: '54.6%' }}>
-              Z-03 · travessia ciclável
+            <div className="absolute left-3 bottom-3 max-w-[280px] bg-gv-red/95 text-white rounded-lg px-3 py-2.5 flex flex-col gap-1">
+              <p className="text-xs font-extrabold">⚠ RISCO ALTO · CARRO × MOTO</p>
+              <p className="text-[11px]">Carro #103 cruza a frente das motos #104 e #105</p>
+              <p className="text-[11px]">TTC estimado 1,6 s · conversão sem dar preferência</p>
             </div>
 
-            <div className="absolute left-3 top-[76%] max-w-[260px] bg-gv-red/95 text-white rounded-lg px-3 py-2.5 flex flex-col gap-1">
-              <p className="text-xs font-extrabold">⚠ RISCO ALTO · CARRO × CICLISTA</p>
-              <p className="text-[11px]">Veículo pesado #111 sobre a travessia ciclável</p>
-              <p className="text-[11px]">Ciclista #108 a ~9 m · TTC estimado 1,8 s</p>
-            </div>
-
-            <div className="absolute flex gap-3 bg-black/60 text-white text-[11px] px-2.5 py-1.5 rounded-lg" style={{ left: '62.5%', top: '2%' }}>
+            <div className="absolute flex gap-3 bg-black/60 text-white text-[11px] px-2.5 py-1.5 rounded-lg" style={{ left: '2%', top: '2%' }}>
               <span className="font-semibold">CAM-01 · poste 6 m · 1080p</span>
-              <span className="text-gv-ink/80">YOLO + ByteTrack · homografia calibrada</span>
+              <span className="text-gv-ink/80 hidden sm:inline">YOLO + ByteTrack · homografia calibrada</span>
             </div>
 
-            <div className="absolute bg-black/60 text-gv-ink text-[11px] px-2.5 py-1.5 rounded-lg" style={{ left: '71.5%', top: '93.5%' }}>
-              Máscara LGPD: fachadas e placas borradas na borda
+            <div className="absolute bg-black/60 text-gv-ink text-[11px] px-2.5 py-1.5 rounded-lg" style={{ right: '2%', bottom: '2%' }}>
+              Máscara LGPD: placas borradas na borda
             </div>
           </div>
 

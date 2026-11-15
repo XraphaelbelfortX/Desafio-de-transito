@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BellRing, X } from 'lucide-react';
 import { Incident, ToastNotification } from './types';
-import { INITIAL_INCIDENTS, INTERSECTION_CENTER, INTERVENTIONS_CATALOG } from './data/mockData';
+import { INITIAL_INCIDENTS, INTERSECTION_CENTER } from './data/mockData';
 import { StreetViewModal } from './components/StreetViewModal';
 import { NavRail, type Tela } from './components/shell/NavRail';
 import { TelaSimulacao } from './screens/TelaSimulacao';
@@ -37,14 +37,7 @@ export function App() {
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   const [latestIncidentId, setLatestIncidentId] = useState<string | null>(null);
 
-  // Ilustração do Street View (desenho fora de escala, não altera a simulação)
-  const [ilustracao, setIlustracao] = useState<string[]>([]);
-  const abrirStreetView = () => {
-    setIlustracao(sim.intervencoes.some((i) => i.tipo === 'tachoes') ? ['tachao'] : []);
-    setIsStreetViewOpen(true);
-  };
-  const alternarIlustracao = (id: string) =>
-    setIlustracao((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const abrirStreetView = () => setIsStreetViewOpen(true);
 
   // Relato do cidadão (protótipo): classificação por palavras-chave e ponto no cruzamento
   const handleSendWhatsAppReport = (transcribedText: string) => {
@@ -164,9 +157,6 @@ export function App() {
       <StreetViewModal
         isOpen={isStreetViewOpen}
         onClose={() => setIsStreetViewOpen(false)}
-        activeInterventions={ilustracao}
-        interventionsCatalog={INTERVENTIONS_CATALOG}
-        onToggleIntervention={alternarIlustracao}
         incidents={incidents}
         intervencoesReais={sim.intervencoes}
       />

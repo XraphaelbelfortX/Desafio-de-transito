@@ -1,4 +1,4 @@
-import { Incident, Intervention } from '../types';
+import { Incident } from '../types';
 
 /**
  * Coordenadas exatas do cruzamento das duas pistas da Av. dos Africanos
@@ -90,49 +90,6 @@ export const INITIAL_INCIDENTS: Incident[] = [
   },
 ];
 
-/**
- * Elementos da ilustração do Street View (só nome e desenho). Custos, códigos SINAPI/SICRO e
- * efeito das intervenções simuladas ficam em src/sim/intervencoes.ts; os números abaixo não são
- * usados na tela.
- */
-export const INTERVENTIONS_CATALOG: Intervention[] = [
-  {
-    id: 'tachao',
-    nome: 'Tachões Refletivos (Tartarugas)',
-    custo: 4500,
-    reducaoRisco: 45,
-    tempoDias: 1,
-    icon: 'ShieldAlert',
-    codigoSinapi: 'SINAPI 102514',
-    normaReferencia: 'CONTRAN 973/22 • Segregação Física',
-    descricaoTatica:
-      'Implantação de tachões bidirecionais refletivos na agulha de retorno e nas duas pistas do cruzamento com a Vicente Venâncio de Queiroga.',
-  },
-  {
-    id: 'ciclofaixa',
-    nome: 'Pintura Ciclofaixa Vermelha',
-    custo: 12000,
-    reducaoRisco: 60,
-    tempoDias: 3,
-    icon: 'Bike',
-    codigoSinapi: 'SINAPI 92984',
-    normaReferencia: 'NACTO Transit Street • Conflito Zero',
-    descricaoTatica:
-      'Demarcação termoplástica vermelha de alto contraste no canteiro central e na travessia da Av. dos Africanos × Vicente Venâncio de Queiroga.',
-  },
-  {
-    id: 'neckdown',
-    nome: 'Avanço de Calçada (Neckdown)',
-    custo: 25000,
-    reducaoRisco: 75,
-    tempoDias: 15,
-    icon: 'Snail',
-    codigoSinapi: 'SINAPI 94273',
-    normaReferencia: 'NACTO Urban Street Design Guide',
-    descricaoTatica:
-      'Ampliação geométrica das esquinas nas duas pistas da Av. dos Africanos com a Vicente Venâncio de Queiroga, encurtando a travessia em 42%.',
-  },
-];
 
 export const CITIZEN_AUDIO_PRESETS = [
   '“Rapaz, quase todo dia tem acidente aqui no cruzamento da Av. dos Africanos com a Vicente Venâncio de Queiroga! Agora mesmo uma caminhonete quase levou um ciclista no retorno.”',
