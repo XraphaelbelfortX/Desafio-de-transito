@@ -194,12 +194,12 @@ export const LogComportamento: React.FC<{ sim: Simulacao }> = ({ sim }) => {
   const visiveis = filtro === 'tudo' ? entradas : entradas.filter((e) => e.tipo === 'marco' || e.critico);
 
   return (
-    <section aria-label="Log de funcionamento" className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-      <header className="px-4 py-3 border-b border-slate-100">
+    <section aria-label="Log de funcionamento" className="bg-gv-card rounded-xl border border-gv-border shadow-sm overflow-hidden">
+      <header className="px-4 py-3 border-b border-gv-border">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <h2 className="text-sm font-extrabold text-slate-900">Log de funcionamento</h2>
-            <p className="text-[11px] text-slate-500 mt-0.5 max-w-xl">
+            <h2 className="text-sm font-extrabold text-gv-ink">Log de funcionamento</h2>
+            <p className="text-[11px] text-gv-muted mt-0.5 max-w-xl">
               O que cada agente decidiu, e o comportamento depois de cada intervenção no mapa.
             </p>
           </div>
@@ -217,7 +217,7 @@ export const LogComportamento: React.FC<{ sim: Simulacao }> = ({ sim }) => {
                 aria-checked={filtro === id}
                 onClick={() => setFiltro(id)}
                 className={`text-[11px] font-semibold px-2 py-1 rounded-lg border ${
-                  filtro === id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'
+                  filtro === id ? 'bg-gv-bg text-white border-gv-border' : 'bg-gv-card text-gv-muted border-gv-border'
                 }`}
               >
                 {nome}
@@ -225,37 +225,37 @@ export const LogComportamento: React.FC<{ sim: Simulacao }> = ({ sim }) => {
             ))}
           </div>
         </div>
-        <p className="text-[11px] text-slate-700 mt-2">{textoDesde(desde, fase)}</p>
+        <p className="text-[11px] text-gv-ink mt-2">{textoDesde(desde, fase)}</p>
       </header>
-      <ol className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+      <ol className="max-h-72 overflow-y-auto divide-y divide-gv-border">
         {visiveis.length === 0 ? (
-          <li className="px-4 py-3 text-[11px] text-slate-500">O log começa quando o primeiro agente decide.</li>
+          <li className="px-4 py-3 text-[11px] text-gv-muted">O log começa quando o primeiro agente decide.</li>
         ) : (
           visiveis.map((e) =>
             e.tipo === 'marco' ? (
-              <li key={e.id} className="px-4 py-2.5 bg-amber-50">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-amber-800">Intervenção no mapa</p>
-                <p className="text-xs font-semibold text-slate-900 mt-0.5">{e.texto}</p>
-                <p className="text-[11px] text-slate-600 mt-0.5">{e.antes} O que aparece acima desta linha foi decidido depois.</p>
+              <li key={e.id} className="px-4 py-2.5 bg-gv-amber/10">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-gv-amber">Intervenção no mapa</p>
+                <p className="text-xs font-semibold text-gv-ink mt-0.5">{e.texto}</p>
+                <p className="text-[11px] text-gv-muted mt-0.5">{e.antes} O que aparece acima desta linha foi decidido depois.</p>
               </li>
             ) : (
               <li key={e.id}>
                 <button
                   type="button"
                   onClick={() => sim.selecionar(e.agenteId)}
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50"
+                  className="w-full text-left px-4 py-2 hover:bg-gv-panel"
                 >
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-xs font-bold text-slate-900">
+                    <span className="text-xs font-bold text-gv-ink">
                       {e.hora} · {e.agente}
                     </span>
                     {e.infracao && (
-                      <span className="text-[10px] font-bold uppercase text-red-700">Infração</span>
+                      <span className="text-[10px] font-bold uppercase text-gv-red">Infração</span>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-800 mt-0.5">{e.titulo}</p>
-                  <p className="text-[11px] text-slate-500 leading-snug">{e.texto}</p>
-                  {e.detalhe && <p className="text-[11px] text-slate-600 mt-0.5 leading-snug">{e.detalhe}</p>}
+                  <p className="text-[11px] text-gv-ink mt-0.5">{e.titulo}</p>
+                  <p className="text-[11px] text-gv-muted leading-snug">{e.texto}</p>
+                  {e.detalhe && <p className="text-[11px] text-gv-muted mt-0.5 leading-snug">{e.detalhe}</p>}
                 </button>
               </li>
             ),

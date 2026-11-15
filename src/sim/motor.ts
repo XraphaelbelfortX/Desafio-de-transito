@@ -169,6 +169,16 @@ const tempoChegada = (o: { v: number; vDes: number; aMax: number }, dist: number
   return t1 + (dist - d1) / o.vDes;
 };
 
+/**
+ * Efeito manada: cada manobra proibida guarda a fração recente de motoristas que a fizeram
+ * (média móvel). Quem vê muita gente fazendo tende a fazer também; quem vê pouca, tende a não fazer.
+ * REF_MANADA é a fração típica de hoje (55% a 84% conforme a manobra e a hora), então sem
+ * intervenção o efeito fica perto de zero.
+ */
+const ALFA_MANADA = 0.05;
+const REF_MANADA = 0.7;
+const PESO_MANADA = 2.0;
+
 const fmt = (v: number, casas = 0) => v.toLocaleString('pt-BR', { maximumFractionDigits: casas, minimumFractionDigits: casas });
 
 export class Motor {
@@ -180,6 +190,9 @@ export class Motor {
   eventos: Evento[] = [];
   /** Quem perdeu a conversão: desvio pelo bairro (fora do mapa) ou retorno legal, desde o último reinício. */
   fluxoRetorno = { desvioExterno: 0, retornoLegal: 0, kmDesvio: 0 };
+  /** Fração recente de quem fez a manobra proibida, por desejo de viagem (efeito manada). */
+  manada = new Map<string, number>();
+  estatManada = { n: 0, soma: 0 };
   private rng: Aleatorio;
   private proxId = 1;
   private fila = new Map<string, (() => Agente | null)[]>();
@@ -425,10 +438,24 @@ export class Motor {
     if (noite) fatores.push({ rotulo: 'Noite (menos fiscalização percebida)', efeito: 0.4 });
     if (fisc.F > 0) fatores.push({ rotulo: `Fiscalização: ${fisc.texto.filter((t) => !t.includes('fora')).join(', ')}`, efeito: -3.5 * fisc.F });
     if (bar.B > 0) fatores.push({ rotulo: `Tachões no caminho (${bar.n} linha${bar.n > 1 ? 's' : ''})`, efeito: -2.2 * bar.B });
+    const taxa = this.manada.get(desejo.id) ?? REF_MANADA;
+    const efManada = PESO_MANADA * (taxa - REF_MANADA);
+    if (Math.abs(efManada) >= 0.05) {
+      fatores.push({
+        rotulo:
+          taxa >= REF_MANADA
+            ? `Vê outros fazendo (${fmt(taxa * 100)}% dos últimos aqui)`
+            : `Quase ninguém faz aqui (${fmt(taxa * 100)}% dos últimos)`,
+        efeito: efManada,
+      });
+    }
     const z = fatores.reduce((acc, f) => acc + f.efeito, 0);
     const p = sigmoide(z);
     const sorteio = this.rng.proximo();
     const infringe = sorteio < p;
+    this.manada.set(desejo.id, taxa + ALFA_MANADA * ((infringe ? 1 : 0) - taxa));
+    this.estatManada.n++;
+    this.estatManada.soma += p;
     const rota = infringe ? ilegal : legal;
     return {
       rota,

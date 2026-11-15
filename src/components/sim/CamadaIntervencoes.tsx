@@ -331,8 +331,8 @@ export const CamadaIntervencoes: React.FC<{ sim: Simulacao }> = ({ sim }) => {
             <button
               type="button"
               className={`flex items-center gap-1 rounded-full border pl-0.5 pr-2 py-0.5 text-[11px] font-bold shadow-lg ${
-                sel ? 'border-cyan-300 ring-2 ring-cyan-300/80' : 'border-white/80'
-              } ${r.valida ? 'bg-slate-950 text-white' : 'bg-slate-700 text-white'}`}
+                sel ? 'border-gv-cyan ring-2 ring-gv-cyan/80' : 'border-white/80'
+              } ${r.valida ? 'bg-gv-border text-white' : 'bg-gv-red text-white'}`}
             >
               <span
                 className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold"
@@ -375,7 +375,7 @@ export const CamadaIntervencoes: React.FC<{ sim: Simulacao }> = ({ sim }) => {
               type="button"
               title={a ? `${DEFINICAO[i.tipo].nome}: ${a.efeito}` : DEFINICAO[i.tipo].nome}
               aria-label={`${DEFINICAO[i.tipo].nome}. ${a?.efeito ?? ''} Arraste para mudar o lugar.`}
-              className="cursor-grab active:cursor-grabbing drop-shadow-[0_6px_4px_rgba(0,0,0,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 rounded"
+              className="cursor-grab active:cursor-grabbing drop-shadow-[0_6px_4px_rgba(0,0,0,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-gv-cyan rounded"
             >
               <IconeIntervencao tipo={i.tipo} tamanho={sel ? 40 : 32} invalida={a ? !a.valida : false} selecionada={sel} />
             </button>
@@ -393,15 +393,15 @@ export const CamadaIntervencoes: React.FC<{ sim: Simulacao }> = ({ sim }) => {
           closeOnClick={false}
           maxWidth="220px"
         >
-          <div className="text-slate-800 max-w-[200px]">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Onde age</p>
-            <p className="text-xs font-bold text-slate-900">{DEFINICAO[tipoSelecionado].nome}</p>
+          <div className="text-gv-ink max-w-[200px]">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-gv-muted">Onde age</p>
+            <p className="text-xs font-bold text-gv-ink">{DEFINICAO[tipoSelecionado].nome}</p>
             <p className="text-[11px] leading-snug mt-0.5">{selecionada.efeito}</p>
             {selecionada.afastada && (
-              <p className="text-[11px] text-slate-600 mt-1">A linha tracejada liga a mancha ao ícone.</p>
+              <p className="text-[11px] text-gv-muted mt-1">A linha tracejada liga a mancha ao ícone.</p>
             )}
             {!selecionada.valida && (
-              <p className="text-[11px] text-slate-700 font-medium mt-1">Arraste o ícone até o lugar certo.</p>
+              <p className="text-[11px] text-gv-red font-medium mt-1">Arraste o ícone até o lugar certo.</p>
             )}
           </div>
         </Popup>

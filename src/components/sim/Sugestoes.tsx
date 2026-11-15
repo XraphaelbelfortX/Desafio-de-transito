@@ -81,7 +81,7 @@ export const CartaoSugestoes: React.FC<{ assistente: Assistente }> = ({ assisten
                   <span className="shrink-0 w-6 h-6 rounded-full bg-violet-700 text-white text-[11px] font-extrabold flex items-center justify-center">S{i + 1}</span>
                   <IconeIntervencao tipo={s.tipo} tamanho={24} />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-xs font-bold text-slate-900 leading-snug">
+                    <span className="block text-xs font-bold text-gv-ink leading-snug">
                       {def.nome} no {s.lugar}
                     </span>
                     <span className="block text-[11px] text-violet-900">{s.destaque ?? `${Math.round(s.parteRisco * 100)}% do risco medido está aqui`}</span>
@@ -92,14 +92,14 @@ export const CartaoSugestoes: React.FC<{ assistente: Assistente }> = ({ assisten
                     <p className="text-[10px] font-bold uppercase tracking-wide text-violet-800 mb-1">Por quê</p>
                     <ul className="space-y-1">
                       {s.porque.map((t) => (
-                        <li key={t} className="text-[11px] text-slate-700 leading-snug pl-3 relative before:content-[''] before:absolute before:left-0 before:top-[0.45rem] before:w-1.5 before:h-1.5 before:rounded-full before:bg-violet-400">
+                        <li key={t} className="text-[11px] text-gv-ink leading-snug pl-3 relative before:content-[''] before:absolute before:left-0 before:top-[0.45rem] before:w-1.5 before:h-1.5 before:rounded-full before:bg-violet-400">
                           {t}
                         </li>
                       ))}
                     </ul>
                     {s.alternativa && (
-                      <p className="text-[11px] text-slate-600 mt-1.5">
-                        <strong className="text-slate-800">Alternativa:</strong> {DEFINICAO[s.alternativa.tipo].nome.toLowerCase()}. {s.alternativa.motivo}
+                      <p className="text-[11px] text-gv-muted mt-1.5">
+                        <strong className="text-gv-ink">Alternativa:</strong> {DEFINICAO[s.alternativa.tipo].nome.toLowerCase()}. {s.alternativa.motivo}
                       </p>
                     )}
                     <div className="flex items-center gap-1.5 mt-2">
@@ -113,11 +113,11 @@ export const CartaoSugestoes: React.FC<{ assistente: Assistente }> = ({ assisten
                       <button
                         type="button"
                         onClick={() => a.ignorar(s.chave)}
-                        className="flex items-center gap-1 text-[11px] font-semibold text-slate-600 border border-slate-300 bg-white hover:bg-slate-50 rounded-lg px-2.5 py-1.5"
+                        className="flex items-center gap-1 text-[11px] font-semibold text-gv-muted border border-gv-border bg-gv-card hover:bg-gv-panel rounded-lg px-2.5 py-1.5"
                       >
                         <X className="w-3.5 h-3.5" /> Ignorar
                       </button>
-                      <span className="text-[10px] text-slate-500 flex items-center gap-0.5 ml-auto">
+                      <span className="text-[10px] text-gv-muted flex items-center gap-0.5 ml-auto">
                         <MapPin className="w-3 h-3" /> S{i + 1} no mapa
                       </span>
                     </div>

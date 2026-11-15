@@ -91,6 +91,8 @@ interface TacticalMapProps {
   sim: Simulacao;
   relatosAtivos: boolean;
   assistente?: Assistente;
+  /** Visão geral (aba Mapa): mapa só pra olhar, sem os controles de rodar/editar a simulação. */
+  compacto?: boolean;
 }
 
 export const TacticalMap: React.FC<TacticalMapProps> = ({
@@ -100,6 +102,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   sim,
   relatosAtivos,
   assistente,
+  compacto = false,
 }) => {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [customToken] = useState<string>(MAPBOX_TOKEN);
@@ -107,12 +110,12 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const [feicaoRede, setFeicaoRede] = useState<FeicaoRede | null>(null);
 
   // Estados da Visão 3D Interativa
-  const [is3DMode, setIs3DMode] = useState<boolean>(true);
+  const [is3DMode, setIs3DMode] = useState<boolean>(!compacto);
   const [predios3D, setPredios3D] = useState<boolean>(true);
   const mapRef = useRef<MapRef>(null);
   const quadroPrev = useRef(0);
   const [soltando, setSoltando] = useState(false);
-  const [mancha, setMancha] = useState<Mancha>('conflitos');
+  const [mancha, setMancha] = useState<Mancha>(compacto ? 'relatos' : 'conflitos');
   const [pontosSim, setPontosSim] = useState({ conflitos: 0, infracoes: 0 });
   const aoPontos = useCallback((conflitos: number, infracoes: number) => {
     setPontosSim((atual) => (atual.conflitos === conflitos && atual.infracoes === infracoes ? atual : { conflitos, infracoes }));
@@ -157,8 +160,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
     latitude: INTERSECTION_CENTER.lat,
     longitude: INTERSECTION_CENTER.lng,
     zoom: INTERSECTION_CENTER.zoom,
-    pitch: 60,
-    bearing: -25,
+    pitch: compacto ? 0 : 60,
+    bearing: compacto ? 0 : -25,
   });
 
   // Garante que se INTERSECTION_CENTER atualizar via HMR, a câmera foca no único mapa de calor correto
@@ -352,8 +355,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
   return (
     <div
-      className={`relative w-full h-full min-h-[450px] rounded-xl overflow-hidden border shadow-sm bg-slate-900 ${
-        soltando ? 'border-cyan-400 ring-2 ring-cyan-400/60' : 'border-slate-200'
+      className={`relative w-full h-full min-h-[450px] rounded-xl overflow-hidden border shadow-sm bg-gv-bg ${
+        soltando ? 'border-gv-cyan ring-2 ring-gv-cyan/60' : 'border-gv-border'
       }`}
       onDragOver={(e) => {
         if (!e.dataTransfer.types.includes(MIME_INTERVENCAO)) return;
@@ -423,18 +426,18 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             onClose={() => setFeicaoRede(null)}
             closeOnClick={false}
           >
-            <div className="p-1 max-w-[240px] text-slate-800 text-[11px] leading-snug">
-              <p className="text-[10px] font-bold uppercase text-slate-500">
+            <div className="p-1 max-w-[240px] text-gv-ink text-[11px] leading-snug">
+              <p className="text-[10px] font-bold uppercase text-gv-muted">
                 {ROTULO_TIPO[String(feicaoRede.props.tipo)] ?? String(feicaoRede.props.tipo)}
               </p>
-              <p className="text-xs font-bold text-slate-900">{String(feicaoRede.props.nome ?? '')}</p>
-              <p className="font-mono text-[10px] text-slate-500">id: {String(feicaoRede.props.id)}</p>
+              <p className="text-xs font-bold text-gv-ink">{String(feicaoRede.props.nome ?? '')}</p>
+              <p className="font-mono text-[10px] text-gv-muted">id: {String(feicaoRede.props.id)}</p>
               {feicaoRede.props.sentido != null && <p>Sentido: {String(feicaoRede.props.sentido)}</p>}
               {feicaoRede.props.tipo === 'movimento' && (
                 <>
                   <p>
                     Sinalização:{' '}
-                    <strong className={feicaoRede.props.permitido === true ? 'text-emerald-700' : 'text-red-700'}>
+                    <strong className={feicaoRede.props.permitido === true ? 'text-gv-green' : 'text-gv-red'}>
                       {feicaoRede.props.permitido === true ? 'permitido' : 'proibido (infração possível)'}
                     </strong>
                   </p>
@@ -456,10 +459,10 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           const isNew = incident.id === latestIncidentId;
           const badgeColor =
             incident.severidade === 'critica'
-              ? 'bg-red-600 border-red-200'
+              ? 'bg-gv-red border-gv-red'
               : incident.severidade === 'alta'
-              ? 'bg-orange-500 border-orange-100'
-              : 'bg-amber-500 border-amber-100';
+              ? 'bg-gv-orange border-gv-orange'
+              : 'bg-gv-amber border-gv-amber';
 
           return (
             <Marker
@@ -482,8 +485,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
                 <span
                   className={`absolute w-9 h-9 rounded-full opacity-45 animate-ping ${
                     incident.severidade === 'critica'
-                      ? 'bg-red-500'
-                      : 'bg-orange-400'
+                      ? 'bg-gv-red'
+                      : 'bg-gv-orange'
                   }`}
                 />
                 <span
@@ -508,30 +511,30 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             closeOnClick={false}
             className="z-30"
           >
-            <div className="p-1.5 max-w-[240px] text-slate-800">
+            <div className="p-1.5 max-w-[240px] text-gv-ink">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span
                   className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded ${
                     selectedIncident.severidade === 'critica'
-                      ? 'bg-red-100 text-red-800'
+                      ? 'bg-gv-red/15 text-gv-red'
                       : selectedIncident.severidade === 'alta'
-                      ? 'bg-orange-100 text-orange-800'
-                      : 'bg-amber-100 text-amber-800'
+                      ? 'bg-gv-orange/15 text-gv-orange'
+                      : 'bg-gv-amber/15 text-gv-amber'
                   }`}
                 >
                   Severidade {selectedIncident.severidade}
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium">
+                <span className="text-[10px] text-gv-muted font-medium">
                   {selectedIncident.horario || 'Recente'}
                 </span>
               </div>
-              <p className="text-xs font-bold text-slate-900 mb-1">
+              <p className="text-xs font-bold text-gv-ink mb-1">
                 {selectedIncident.tipo}
               </p>
-              <p className="text-[11px] text-slate-600 leading-snug">
+              <p className="text-[11px] text-gv-muted leading-snug">
                 {selectedIncident.resumo}
               </p>
-              <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
+              <div className="mt-2 pt-1.5 border-t border-gv-border flex items-center justify-between text-[10px] text-gv-muted">
                 <span>Origem: {selectedIncident.origem || 'WhatsApp'}</span>
                 <span className="font-mono">
                   {selectedIncident.lat.toFixed(5)}, {selectedIncident.lng.toFixed(5)}
@@ -553,7 +556,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       </div>
 
       {sim.modoColocar && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-full shadow-xl border border-blue-300/60 flex items-center gap-2 whitespace-nowrap">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 bg-gv-cyan text-gv-cyanink text-sm font-semibold px-4 py-2 rounded-full shadow-xl border border-gv-cyan/40 flex items-center gap-2 whitespace-nowrap">
           <Crosshair className="w-4 h-4" />
           Clique no mapa para colocar a intervenção
           <button type="button" onClick={() => sim.setModoColocar(null)} className="ml-1 text-[11px] font-bold bg-white/20 hover:bg-white/30 rounded-full px-2 py-0.5">
@@ -562,49 +565,55 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         </div>
       )}
 
-      {/* Controles de câmera no estilo Google Earth */}
-      <CameraControls3D
-        mapRef={mapRef}
-        centro={{ lat: INTERSECTION_CENTER.lat, lng: INTERSECTION_CENTER.lng }}
-        bearing={viewState.bearing}
-        pitch={viewState.pitch}
-        is3D={is3DMode}
-        onToggle3D={handleToggle3DMode}
-        predios3D={predios3D}
-        onTogglePredios={() => setPredios3D((v) => !v)}
-        vistas={VISTAS}
-      />
+      {/* Controles de câmera no estilo Google Earth — só na mesa de simulação, não na visão geral */}
+      {!compacto && (
+        <CameraControls3D
+          mapRef={mapRef}
+          centro={{ lat: INTERSECTION_CENTER.lat, lng: INTERSECTION_CENTER.lng }}
+          bearing={viewState.bearing}
+          pitch={viewState.pitch}
+          is3D={is3DMode}
+          onToggle3D={handleToggle3DMode}
+          predios3D={predios3D}
+          onTogglePredios={() => setPredios3D((v) => !v)}
+          vistas={VISTAS}
+        />
+      )}
 
       {/* Barra do mapa (canto superior direito): vista, rua, centralizar e rede de faixas */}
-      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-slate-900/85 backdrop-blur-md border border-slate-700/80 rounded-xl p-1 shadow-lg">
-        <button
-          type="button"
-          onClick={handleToggle3DMode}
-          aria-pressed={is3DMode}
-          title={is3DMode ? 'Voltar para a vista de cima (2D)' : 'Ver em 3D'}
-          className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition ${is3DMode ? 'bg-amber-400 text-slate-950' : 'text-slate-200 hover:bg-white/10'}`}
-        >
-          <Box className="w-4 h-4" />
-          {is3DMode ? '3D' : '2D'}
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setShowRede((prev) => !prev);
-            setFeicaoRede(null);
-          }}
-          aria-pressed={showRede}
-          title="Mostrar/ocultar a rede de faixas"
-          className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition ${showRede ? 'bg-blue-600 text-white' : 'text-slate-200 hover:bg-white/10'}`}
-        >
-          <Layers className="w-4 h-4" />
-          Faixas
-        </button>
+      <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-gv-bg/85 backdrop-blur-md border border-gv-border/80 rounded-xl p-1 shadow-lg">
+        {!compacto && (
+          <>
+            <button
+              type="button"
+              onClick={handleToggle3DMode}
+              aria-pressed={is3DMode}
+              title={is3DMode ? 'Voltar para a vista de cima (2D)' : 'Ver em 3D'}
+              className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition ${is3DMode ? 'bg-gv-amber text-gv-cyanink' : 'text-gv-ink hover:bg-white/10'}`}
+            >
+              <Box className="w-4 h-4" />
+              {is3DMode ? '3D' : '2D'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowRede((prev) => !prev);
+                setFeicaoRede(null);
+              }}
+              aria-pressed={showRede}
+              title="Mostrar/ocultar a rede de faixas"
+              className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition ${showRede ? 'bg-gv-cyan text-gv-cyanink' : 'text-gv-ink hover:bg-white/10'}`}
+            >
+              <Layers className="w-4 h-4" />
+              Faixas
+            </button>
+          </>
+        )}
         <button
           type="button"
           onClick={handleRecenter}
           title="Centralizar no cruzamento"
-          className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-200 hover:bg-white/10 transition"
+          className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-lg text-gv-ink hover:bg-white/10 transition"
         >
           <Crosshair className="w-4 h-4" />
           Centralizar
@@ -613,26 +622,28 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         <button
           type="button"
           onClick={onOpenStreetView}
-          className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg bg-white text-gov-navy hover:bg-blue-50 transition"
+          className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg bg-gv-cyan text-gv-cyanink hover:brightness-110 transition"
         >
           <Eye className="w-4 h-4" />
           Ver a rua
         </button>
       </div>
 
-      {/* Mancha, legenda e controles de tempo no canto inferior esquerdo */}
-      <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-2 items-start max-w-[min(100%-5.5rem,440px)]">
-        <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} rodando={sim.rodando} pontosSim={pontosSim} relatosAtivos={relatosAtivos} />
-        <ControlesTempo
-          rodando={sim.rodando}
-          onRodando={sim.setRodando}
-          velocidade={sim.velocidade}
-          onVelocidade={sim.setVelocidade}
-          hora={sim.hora}
-          onHora={sim.definirHora}
-          onReiniciar={sim.reiniciar}
-        />
-      </div>
+      {/* Mancha, legenda e controles de tempo no canto inferior esquerdo — só na mesa de simulação */}
+      {!compacto && (
+        <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-2 items-start max-w-[min(100%-5.5rem,440px)]">
+          <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} rodando={sim.rodando} pontosSim={pontosSim} relatosAtivos={relatosAtivos} />
+          <ControlesTempo
+            rodando={sim.rodando}
+            onRodando={sim.setRodando}
+            velocidade={sim.velocidade}
+            onVelocidade={sim.setVelocidade}
+            hora={sim.hora}
+            onHora={sim.definirHora}
+            onReiniciar={sim.reiniciar}
+          />
+        </div>
+      )}
     </div>
   );
 };
