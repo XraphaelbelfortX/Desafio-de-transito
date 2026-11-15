@@ -94,7 +94,7 @@ export const StreetViewModal: React.FC<StreetViewModalProps> = ({ isOpen, onClos
           <p className="text-xs text-gv-muted">
             {fonte === 'planta'
               ? 'Desenho em escala sobre a planta oficial da SMTT, para mostrar como fica. O efeito no risco se mede na aba Simular.'
-              : 'Pins: cor da zona para cada intervenção real colocada, e a cor da severidade para cada relato.'}
+              : 'Pins: cor da zona para cada intervenção real colocada, e a cor da severidade para cada ocorrência.'}
           </p>
           <button
             type="button"

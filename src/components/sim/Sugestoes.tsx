@@ -53,27 +53,29 @@ export function useAssistente(sim: Simulacao): Assistente {
 export const CartaoSugestoes: React.FC<{ assistente: Assistente }> = ({ assistente: a }) => {
   const [aberta, setAberta] = useState<string | null>(null);
   return (
-    <section aria-label="Sugestões do assistente" className="rounded-xl border border-violet-200 bg-violet-50/60 overflow-hidden">
-      <header className="px-3 py-2 flex items-center gap-2 border-b border-violet-200 bg-violet-100/70">
-        <Lightbulb className="w-4 h-4 text-violet-700" />
-        <h3 className="text-sm font-extrabold text-violet-950 flex-1">Sugestões do assistente</h3>
-        <span className="text-[10px] font-semibold text-violet-800">quem decide é você</span>
+    <section aria-label="Sugestões do assistente" className="rounded-xl border border-gv-purple/40 bg-gv-purple/10 overflow-hidden">
+      <header className="px-3 py-2 flex items-start gap-2 border-b border-gv-purple/30 bg-gv-purple/15">
+        <Lightbulb className="w-4 h-4 text-gv-purple mt-0.5 shrink-0" />
+        <div className="min-w-0">
+          <h3 className="text-sm font-extrabold text-gv-ink leading-tight">Sugestões do assistente</h3>
+          <span className="text-[10px] font-semibold text-gv-purple">quem decide é você</span>
+        </div>
       </header>
       {a.sugestoes.length === 0 ? (
-        <p className="text-[11px] text-violet-900 px-3 py-2.5">
+        <p className="text-[11px] text-gv-muted px-3 py-2.5">
           {a.minutos < 5
             ? 'Deixe a simulação rodar alguns minutos (use 20×). O assistente olha onde acontecem os quase-acidentes e as infrações e sugere onde agir.'
             : 'Nada novo a sugerir com o que está no mapa. Rode mais tempo ou mude a hora do dia.'}
         </p>
       ) : (
-        <ol className="divide-y divide-violet-200">
+        <ol className="divide-y divide-gv-purple/20">
           {a.sugestoes.map((s, i) => {
             const def = DEFINICAO[s.tipo];
             const aberto = aberta === s.chave || (aberta === null && i === 0);
             return (
               <li
                 key={s.chave}
-                className={`px-3 py-2.5 ${a.destacada === s.chave ? 'bg-violet-100' : ''}`}
+                className={`px-3 py-2.5 ${a.destacada === s.chave ? 'bg-gv-purple/15' : ''}`}
                 onMouseEnter={() => a.destacar(s.chave)}
                 onMouseLeave={() => a.destacar(null)}
               >
@@ -84,12 +86,12 @@ export const CartaoSugestoes: React.FC<{ assistente: Assistente }> = ({ assisten
                     <span className="block text-xs font-bold text-gv-ink leading-snug">
                       {def.nome} no {s.lugar}
                     </span>
-                    <span className="block text-[11px] text-violet-900">{s.destaque ?? `${Math.round(s.parteRisco * 100)}% do risco medido está aqui`}</span>
+                    <span className="block text-[11px] text-gv-purple">{s.destaque ?? `${Math.round(s.parteRisco * 100)}% do risco medido está aqui`}</span>
                   </span>
                 </button>
                 {aberto && (
                   <div className="mt-2 ml-8">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-violet-800 mb-1">Por quê</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-gv-purple mb-1">Por quê</p>
                     <ul className="space-y-1">
                       {s.porque.map((t) => (
                         <li key={t} className="text-[11px] text-gv-ink leading-snug pl-3 relative before:content-[''] before:absolute before:left-0 before:top-[0.45rem] before:w-1.5 before:h-1.5 before:rounded-full before:bg-violet-400">
@@ -129,7 +131,7 @@ export const CartaoSugestoes: React.FC<{ assistente: Assistente }> = ({ assisten
         </ol>
       )}
       {a.sugestoes.length > 0 && (
-        <p className="text-[10px] text-violet-900/80 px-3 py-1.5 border-t border-violet-200">
+        <p className="text-[10px] text-gv-muted px-3 py-1.5 border-t border-gv-purple/20">
           Baseado em {Math.round(a.minutos)} min simulados desde a última mudança no mapa. Depois de testar, veja a variação contra hoje.
         </p>
       )}

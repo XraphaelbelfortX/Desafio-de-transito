@@ -52,6 +52,14 @@
   border-top-color: #162036 !important;
   border-bottom-color: #162036 !important;
 }
+.maplibregl-popup-anchor-left .maplibregl-popup-tip,
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: #162036 !important;
+}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip,
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: #162036 !important;
+}
 .maplibregl-popup-close-button,
 .mapboxgl-popup-close-button {
   color: #8a97b0;
@@ -70,3 +78,39 @@
   box-shadow: none !important;
 }
 .painel-embutido ol { max-height: none !important; }
+
+/* Impressão do relatório: papel branco, texto escuro, sem a navegação e sem botões */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+  html,
+  body,
+  #root,
+  #root > div,
+  main,
+  .relatorio,
+  .relatorio-rolagem {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  nav[aria-label='Navegação principal'],
+  .no-print {
+    display: none !important;
+  }
+  .relatorio *:not(.barra) {
+    color: #111 !important;
+    background: transparent !important;
+    border-color: #cfd6dd !important;
+    box-shadow: none !important;
+  }
+  .relatorio .barra {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .print-bloco {
+    break-inside: avoid;
+  }
+}

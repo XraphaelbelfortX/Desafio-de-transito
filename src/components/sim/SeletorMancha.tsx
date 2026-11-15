@@ -1,11 +1,11 @@
 import React from 'react';
 
-export type Mancha = 'conflitos' | 'infracoes' | 'relatos';
+export type Mancha = 'conflitos' | 'infracoes' | 'ocorrencias';
 
 const OPCOES: { id: Mancha; nome: string; rampa: string }[] = [
   { id: 'conflitos', nome: 'Quase-acidentes', rampa: 'from-gv-orange to-gv-red' },
   { id: 'infracoes', nome: 'Infrações', rampa: 'from-pink-400 to-purple-950' },
-  { id: 'relatos', nome: 'Relatos', rampa: 'from-gv-cyan via-gv-amber to-gv-red' },
+  { id: 'ocorrencias', nome: 'Ocorrências', rampa: 'from-gv-cyan via-gv-amber to-gv-red' },
 ];
 
 const AGENTES = [
@@ -23,18 +23,15 @@ interface Props {
   erro: string | null;
   rodando: boolean;
   pontosSim: { conflitos: number; infracoes: number };
-  relatosAtivos: boolean;
 }
 
 /** Seletor da mancha e legenda dos agentes, no canto do mapa. */
-export const SeletorMancha: React.FC<Props> = ({ mancha, onMancha, erro, rodando, pontosSim, relatosAtivos }) => {
+export const SeletorMancha: React.FC<Props> = ({ mancha, onMancha, erro, rodando, pontosSim }) => {
   const ativa = OPCOES.find((o) => o.id === mancha) ?? OPCOES[0];
-  const pontos = mancha === 'relatos' ? null : pontosSim[mancha];
+  const pontos = mancha === 'ocorrencias' ? null : pontosSim[mancha];
   const aviso =
     pontos === null
-      ? relatosAtivos
-        ? 'Relatos que já chegaram. Não mudam com a simulação.'
-        : 'Relatos desligados. O mapa não mostra esses pontos.'
+      ? 'Ocorrências já registradas no cruzamento. Não mudam com a simulação.'
       : pontos === 0
         ? rodando
           ? 'Ainda vazia. A simulação pinta aqui conforme registra.'

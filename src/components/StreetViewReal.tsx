@@ -21,7 +21,7 @@ interface Props {
 }
 
 /**
- * Street View real do Google (foto do cruzamento) com pins das intervenções e dos relatos
+ * Street View real do Google (foto do cruzamento) com pins das intervenções e das ocorrências
  * sobrepostos na posição certa — o Google cuida da projeção em perspectiva.
  * Sem VITE_GOOGLE_MAPS_API_KEY configurada, mostra a explicação em vez de tentar carregar.
  */
@@ -95,7 +95,7 @@ export const StreetViewReal: React.FC<Props> = ({ centro, incidents, intervencoe
         <p className="text-xs text-gv-muted max-w-md">
           Defina <code className="text-gv-cyan">VITE_GOOGLE_MAPS_API_KEY</code> num arquivo <code className="text-gv-cyan">.env</code> (veja{' '}
           <code className="text-gv-cyan">.env.example</code>) para trocar a ilustração por uma foto real do Google Street
-          View com os pins das intervenções e dos relatos em cima.
+          View com os pins das intervenções e das ocorrências em cima.
         </p>
       </div>
     );

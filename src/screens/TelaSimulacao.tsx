@@ -11,13 +11,11 @@ interface Props {
   sim: Simulacao;
   assistente: Assistente;
   incidents: Incident[];
-  latestIncidentId: string | null;
-  relatosAtivos: boolean;
   onOpenStreetView: () => void;
 }
 
 /** Tela "Simular" (SimCity Tático do Figma): paleta à esquerda, mapa ao centro, painel de decisão à direita. */
-export const TelaSimulacao: React.FC<Props> = ({ sim, assistente, incidents, latestIncidentId, relatosAtivos, onOpenStreetView }) => {
+export const TelaSimulacao: React.FC<Props> = ({ sim, assistente, incidents, onOpenStreetView }) => {
   const [cenarioAtivo, setCenarioAtivo] = useState<IdCenario | 'atual'>('atual');
 
   const abrirCenario = (id: IdCenario) => {
@@ -67,7 +65,7 @@ export const TelaSimulacao: React.FC<Props> = ({ sim, assistente, incidents, lat
         </aside>
 
         <div className="flex-1 min-w-0 min-h-[420px] lg:min-h-0">
-          <TacticalMap incidents={incidents} onOpenStreetView={onOpenStreetView} latestIncidentId={latestIncidentId} sim={sim} relatosAtivos={relatosAtivos} assistente={assistente} />
+          <TacticalMap incidents={incidents} onOpenStreetView={onOpenStreetView} sim={sim} assistente={assistente} />
         </div>
 
         <aside className="w-full lg:w-[360px] shrink-0 lg:min-h-0 max-h-[70vh] lg:max-h-none">

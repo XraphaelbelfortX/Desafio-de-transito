@@ -8,14 +8,6 @@ export interface Incident {
   severidade: SeverityLevel;
   resumo: string;
   horario?: string;
-  origem?: 'WhatsApp Cidadão' | 'Agente SMTT' | 'Sensor Inteligente';
+  origem?: 'Agente SMTT' | 'Câmera CAM-01' | 'Registro SMTT';
   pesoHeatmap?: number;
-}
-
-export interface ToastNotification {
-  id: string;
-  title: string;
-  message: string;
-  incidentResumo?: string;
-  timestamp: string;
 }

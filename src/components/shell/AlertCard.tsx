@@ -17,7 +17,7 @@ const iconePorTipo = (tipo: string) => {
   return AlertTriangle;
 };
 
-/** Cartão de relato/alerta (lista "Alertas recentes"), com a cor da faixa dada pela severidade real. */
+/** Cartão de uma ocorrência registrada, com a cor da faixa dada pela severidade. */
 export const AlertCard: React.FC<{ incidente: Incident }> = ({ incidente }) => {
   const cor = COR_SEVERIDADE[incidente.severidade];
   const Icone = iconePorTipo(incidente.tipo);
@@ -31,7 +31,7 @@ export const AlertCard: React.FC<{ incidente: Incident }> = ({ incidente }) => {
         <p className="text-[13px] font-bold text-gv-ink truncate">{incidente.tipo}</p>
         <p className="text-[11px] text-gv-muted truncate">{incidente.resumo}</p>
         <p className="text-[11px] text-gv-cyan truncate">
-          {incidente.horario ?? 'Agora mesmo'} · {incidente.origem ?? 'WhatsApp Cidadão'}
+          {incidente.horario ?? 'Recente'} · {incidente.origem ?? 'Registro SMTT'}
         </p>
       </div>
     </div>

@@ -1,6 +1,8 @@
 # Guardião Viário — MVP Hackathon de Mobilidade Urbana (GovTech)
 
-Simulador de segurança viária para a **SMTT São Luís/MA**, no cruzamento da **Av. dos Africanos com a Av. Vicente Venâncio de Queiroga**. O gestor coloca intervenções no mapa (câmera, semáforo, fechar canteiro, retorno, tachões, faixa elevada, refúgio, lombada, agente de trânsito) e uma simulação por agentes mede o efeito em quase-acidentes, infrações e atraso, com o custo de cada opção. Os relatos de quase-acidentes enviados pela população (WhatsApp) entram como uma das fontes do mapa.
+Simulador de segurança viária para a **SMTT São Luís/MA**, no cruzamento da **Av. dos Africanos com a Av. Vicente Venâncio de Queiroga**. O gestor coloca intervenções no mapa (câmera, semáforo, fechar canteiro, retorno, tachões, faixa elevada, refúgio, lombada, agente de trânsito) e uma simulação por agentes mede o efeito em quase-acidentes, infrações e atraso, com o custo de cada opção. As ocorrências registradas no cruzamento (agente, câmera, registro da SMTT) aparecem no Mapa de Alerta.
+
+Guia completo (como funciona a simulação, o assistente, a visão computacional e o passo a passo de uso): [docs/guardiao-viario-guia.pdf](docs/guardiao-viario-guia.pdf).
 
 ## Stack
 - **React 18 + TypeScript + Vite**
@@ -9,13 +11,13 @@ Simulador de segurança viária para a **SMTT São Luís/MA**, no cruzamento da 
 - **react-map-gl** com MapLibre (satélite Esri, sem token) ou Mapbox (com token)
 
 ## Estrutura
-- [src/App.tsx](src/App.tsx): layout da página; liga o mapa, o painel de intervenções e o simulador de relatos.
-- [src/components/TacticalMap.tsx](src/components/TacticalMap.tsx): mapa do cruzamento (centro em -2.55498, -44.27049), rede de faixas, visão 3D, mancha de calor dos relatos e área onde se soltam as intervenções.
-- [src/components/sim/PainelIntervencoes.tsx](src/components/sim/PainelIntervencoes.tsx): painel lateral com as 9 intervenções arrastáveis, a lista do que está no mapa (com efeito, custo e edição dos tempos do semáforo), o resultado ao vivo da simulação e os cenários salvos A e B.
+- [src/App.tsx](src/App.tsx): barra de navegação e as 4 telas.
+- [src/screens/](src/screens/): **Mapa** (visão geral, um alerta por cruzamento), **Câmeras** (demonstração da visão computacional sobre a foto real), **Simular** (mesa de trabalho: paleta, mapa, painel de decisão) e **Relatórios** (relatório imprimível do cruzamento).
+- [src/components/TacticalMap.tsx](src/components/TacticalMap.tsx): mapa do cruzamento (centro em -2.55498, -44.27049), rede de faixas, visão 3D, mancha de calor das ocorrências e área onde se soltam as intervenções. Na aba Mapa roda em modo compacto.
+- [src/components/sim/PaletaIntervencoes.tsx](src/components/sim/PaletaIntervencoes.tsx) e [PainelIntervencoes.tsx](src/components/sim/PainelIntervencoes.tsx): catálogo das 9 intervenções; lista do que está no mapa (efeito, custo, tempos do semáforo), resultado ao vivo e cenários A e B.
 - [src/components/sim/CamadaIntervencoes.tsx](src/components/sim/CamadaIntervencoes.tsx): desenho de cada intervenção no chão e ícone arrastável no mapa.
 - [src/sim/](src/sim/): motor da simulação, sem dependência de tela (roda no navegador e no Node).
-- [src/components/StreetViewModal.tsx](src/components/StreetViewModal.tsx): ilustração antes e depois, fora de escala (não altera a simulação).
-- [src/components/WhatsAppSimulator.tsx](src/components/WhatsAppSimulator.tsx): protótipo do relato do cidadão (texto classificado por palavras-chave; ainda sem integração com o WhatsApp).
+- [src/components/StreetViewModal.tsx](src/components/StreetViewModal.tsx): "Ver a rua": desenho em escala sobre a planta oficial da SMTT ([PlantaOficial.tsx](src/components/PlantaOficial.tsx)) e foto real do Google Street View ([StreetViewReal.tsx](src/components/StreetViewReal.tsx), precisa de `VITE_GOOGLE_MAPS_API_KEY`). Não altera a simulação.
 
 ## Simulador por agentes (`src/sim/`)
 | Arquivo | O que faz |

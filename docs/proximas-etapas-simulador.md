@@ -39,7 +39,7 @@ Barra no canto inferior esquerdo do mapa (o canto inferior direito já tem os co
 
 ### 4. Mapa de calor de infrações e conflitos
 - `motor.eventos`: `{tipo: 'conflito' | 'infracao', x, y, peso, grave, descricao}`. Atualize a fonte a cada ~0,5 s (não a cada quadro).
-- Seletor da mancha: Quase-acidentes, Infrações e Relatos (a mancha dos relatos do WhatsApp já existe no `TacticalMap`; esconda os marcadores dos relatos quando ela não estiver selecionada).
+- Seletor da mancha: Quase-acidentes, Infrações e Ocorrências (a mancha das ocorrências registradas já existe no `TacticalMap`; esconda os marcadores quando ela não estiver selecionada).
 - Uma rampa de uma cor por camada (ex. laranja → vermelho escuro para conflitos, rosa → roxo para infrações), transparente no zero.
 - Opcional: um anel que cresce e some em cada conflito novo, usando `sim.pulsos` (idade = agora − `realT`, some em 1,6 s).
 - As contagens zeram quando as intervenções mudam (`motor.configurar`), então o mapa de calor mostra a configuração atual.

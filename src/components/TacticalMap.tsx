@@ -82,25 +82,31 @@ interface FeicaoRede {
  */
 export const MAPBOX_TOKEN = 'YOUR_MAPBOX_TOKEN';
 
+export interface Hotspot {
+  total: number;
+  aberto: boolean;
+  onAlternar: () => void;
+  conteudo: React.ReactNode;
+}
+
 interface TacticalMapProps {
   incidents: Incident[];
   onOpenStreetView: () => void;
-  latestIncidentId: string | null;
   sim: Simulacao;
-  relatosAtivos: boolean;
   assistente?: Assistente;
   /** Visão geral (aba Mapa): mapa só pra olhar, sem os controles de rodar/editar a simulação. */
   compacto?: boolean;
+  /** Visão geral: um único ponto no cruzamento que abre o resumo de tudo. */
+  hotspot?: Hotspot;
 }
 
 export const TacticalMap: React.FC<TacticalMapProps> = ({
   incidents,
   onOpenStreetView,
-  latestIncidentId,
   sim,
-  relatosAtivos,
   assistente,
   compacto = false,
+  hotspot,
 }) => {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [customToken] = useState<string>(MAPBOX_TOKEN);
@@ -112,7 +118,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   const [predios3D, setPredios3D] = useState<boolean>(true);
   const mapRef = useRef<MapRef>(null);
   const [soltando, setSoltando] = useState(false);
-  const [mancha, setMancha] = useState<Mancha>(compacto ? 'relatos' : 'conflitos');
+  const [mancha, setMancha] = useState<Mancha>(compacto ? 'ocorrencias' : 'conflitos');
   const [pontosSim, setPontosSim] = useState({ conflitos: 0, infracoes: 0 });
   const aoPontos = useCallback((conflitos: number, infracoes: number) => {
     setPontosSim((atual) => (atual.conflitos === conflitos && atual.infracoes === infracoes ? atual : { conflitos, infracoes }));
@@ -282,7 +288,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
   );
 
   // Camada nativa de Heatmap (única mancha de calor centrada exatamente nos alertas)
-  // (os relatos são fatos passados: a mancha não muda quando se coloca uma intervenção)
+  // (as ocorrências são fatos passados: a mancha não muda quando se coloca uma intervenção)
   const heatmapLayer: LayerProps = useMemo(() => {
     return {
       id: 'incidents-heatmap',
@@ -393,7 +399,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
         {/* Camada Nativa Única de Heatmap de Quase-Acidentes centrada nos alertas */}
         <Source id="incidents-source" type="geojson" data={incidentsGeoJson}>
-          <Layer {...heatmapLayer} layout={{ visibility: mancha === 'relatos' && relatosAtivos ? 'visible' : 'none' }} />
+          <Layer {...heatmapLayer} layout={{ visibility: mancha === 'ocorrencias' ? 'visible' : 'none' }} />
         </Source>
 
         {/* Rede de faixas (gerada por scripts/gera-rede.mjs) */}
@@ -401,7 +407,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
 
         {/* Agentes, semáforos e mancha da simulação (GeoJSON direto na fonte, sem estado React) */}
         <CamadaSimulacao sim={sim} mancha={mancha} onCamadas={aoCamadas} onPontos={aoPontos} />
-        {assistente && !sim.modoColocar && <MarcadoresSugestao assistente={assistente} />}
+        {assistente && !sim.modoColocar && !compacto && <MarcadoresSugestao assistente={assistente} />}
 
         {feicaoRede && (
           <Popup
@@ -440,9 +446,50 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
         {/* Intervenções colocadas pelo painel (desenho no chão + ícones arrastáveis) */}
         <CamadaIntervencoes sim={sim} />
 
-        {/* Marcadores dos relatos só aparecem com a mancha Relatos */}
-        {mancha === 'relatos' && relatosAtivos && incidents.map((incident) => {
-          const isNew = incident.id === latestIncidentId;
+        {/* Visão geral: um único ponto no cruzamento, que abre o resumo de tudo */}
+        {compacto && hotspot && (
+          <Marker
+            longitude={INTERSECTION_CENTER.lng}
+            latitude={INTERSECTION_CENTER.lat}
+            anchor="center"
+            onClick={(e) => {
+              e.originalEvent.stopPropagation();
+              hotspot.onAlternar();
+            }}
+          >
+            <button
+              type="button"
+              aria-label={`Ver as ${hotspot.total} ocorrências do cruzamento`}
+              aria-expanded={hotspot.aberto}
+              className="relative flex items-center justify-center focus:outline-none"
+            >
+              <span className="absolute w-14 h-14 rounded-full bg-gv-red/40 animate-ping" />
+              <span className="relative flex items-center justify-center w-11 h-11 rounded-full bg-gv-red border-[3px] border-white text-white shadow-xl">
+                <AlertTriangle className="w-5 h-5" />
+              </span>
+              <span className="absolute -top-1.5 -right-2 min-w-[22px] h-[22px] px-1 rounded-full bg-white text-gv-red text-[11px] font-extrabold flex items-center justify-center shadow">
+                {hotspot.total}
+              </span>
+            </button>
+          </Marker>
+        )}
+        {compacto && hotspot?.aberto && (
+          <Popup
+            longitude={INTERSECTION_CENTER.lng}
+            latitude={INTERSECTION_CENTER.lat}
+            anchor="left"
+            offset={30}
+            onClose={hotspot.onAlternar}
+            closeButton={true}
+            closeOnClick={false}
+            maxWidth="340px"
+          >
+            {hotspot.conteudo}
+          </Popup>
+        )}
+
+        {/* Marcadores das ocorrências (só na mesa de simulação, com a mancha Ocorrências) */}
+        {!compacto && mancha === 'ocorrencias' && incidents.map((incident) => {
           const badgeColor =
             incident.severidade === 'critica'
               ? 'bg-gv-red border-gv-red'
@@ -463,10 +510,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
             >
               <button
                 type="button"
-                aria-label={`Ver relato: ${incident.tipo}`}
-                className={`group relative flex items-center justify-center transition-transform duration-200 hover:scale-125 focus:outline-none ${
-                  isNew ? 'scale-125' : ''
-                }`}
+                aria-label={`Ver ocorrência: ${incident.tipo}`}
+                className="group relative flex items-center justify-center transition-transform duration-200 hover:scale-125 focus:outline-none"
               >
                 <span
                   className={`absolute w-9 h-9 rounded-full opacity-45 animate-ping ${
@@ -485,8 +530,8 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
           );
         })}
 
-        {/* Popup de Detalhes do Relato */}
-        {mancha === 'relatos' && relatosAtivos && selectedIncident && (
+        {/* Detalhe da ocorrência */}
+        {!compacto && mancha === 'ocorrencias' && selectedIncident && (
           <Popup
             longitude={selectedIncident.lng}
             latitude={selectedIncident.lat}
@@ -521,7 +566,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
                 {selectedIncident.resumo}
               </p>
               <div className="mt-2 pt-1.5 border-t border-gv-border flex items-center justify-between text-[10px] text-gv-muted">
-                <span>Origem: {selectedIncident.origem || 'WhatsApp'}</span>
+                <span>Origem: {selectedIncident.origem || 'Registro SMTT'}</span>
                 <span className="font-mono">
                   {selectedIncident.lat.toFixed(5)}, {selectedIncident.lng.toFixed(5)}
                 </span>
@@ -618,7 +663,7 @@ export const TacticalMap: React.FC<TacticalMapProps> = ({
       {/* Mancha, legenda e controles de tempo no canto inferior esquerdo — só na mesa de simulação */}
       {!compacto && (
         <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-2 items-start max-w-[min(100%-5.5rem,440px)]">
-          <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} rodando={sim.rodando} pontosSim={pontosSim} relatosAtivos={relatosAtivos} />
+          <SeletorMancha mancha={mancha} onMancha={setMancha} erro={sim.erro} rodando={sim.rodando} pontosSim={pontosSim} />
           <ControlesTempo
             rodando={sim.rodando}
             onRodando={sim.setRodando}
